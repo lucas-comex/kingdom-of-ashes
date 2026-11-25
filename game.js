@@ -1,0 +1,14 @@
+class World extends Phaser.Scene {
+create(){
+this.p={x:15,y:15};this.goal=null;this.phase=0;this.level=1;this.trees=[];this.world=this.add.graphics();this.actor=this.add.graphics();this.cameras.main.setBackgroundColor('#283b27');this.keys=this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SHIFT');this.input.on('pointerdown',p=>{const x=p.worldX-1100,y=p.worldY-100;this.goal={x:(x/32+y/16)/2,y:(y/16-x/32)/2}});
+const rand=new Phaser.Math.RandomDataGenerator(['ashes']);
+for(let y=0;y<35;y++)for(let x=0;x<35;x++){let [a,b]=this.iso(x,y);let road=Math.abs(x-15)<=1||Math.abs(y-15)<=1;this.world.fillStyle(road?0x918061:[0x415d35,0x456139,0x49643a,0x405a34][rand.between(0,3)]);this.world.fillPoints([{x:a,y:b-16},{x:a+32,y:b},{x:a,y:b+16},{x:a-32,y:b}],true);if(!road&&rand.frac()<.4){this.world.lineStyle(1,0x71854b,.5);this.world.lineBetween(a+7,b+3,a+5,b-3)}if(!road&&rand.frac()<.055)this.trees.push({x,y});}
+this.objects=[];for(const t of this.trees){let [a,b]=this.iso(t.x,t.y);let g=this.add.graphics();g.fillStyle(0x172719,.4);g.fillEllipse(a,b,42,15);g.fillStyle(0x60442b);g.fillRect(a-4,b-35,8,35);for(let i=0;i<3;i++){g.fillStyle([0x29452b,0x365c32,0x4d713a][i]);g.fillEllipse(a,b-32-i*13,56-i*12,38)}g.setDepth(b);this.objects.push(g)}
+this.actor.setDepth(1000);this.cameras.main.centerOn(...this.iso(15,15));
+}
+iso(x,y){return [1100+(x-y)*32,100+(x+y)*16]}
+update(_,ms){let dt=Math.min(ms/1000,.05),k=this.keys;let dx=Number(k.D.isDown||k.RIGHT.isDown)-Number(k.A.isDown||k.LEFT.isDown),dy=Number(k.S.isDown||k.DOWN.isDown)-Number(k.W.isDown||k.UP.isDown);let vx=dx+dy,vy=dy-dx;if(dx||dy)this.goal=null;else if(this.goal){vx=this.goal.x-this.p.x;vy=this.goal.y-this.p.y;if(Math.hypot(vx,vy)<.12){this.goal=null;vx=vy=0}}
+let n=Math.hypot(vx,vy),moving=false;if(n){let s=(k.SHIFT.isDown?4:2.5)*(1+.02*(this.level-1))*dt;let x=Phaser.Math.Clamp(this.p.x+vx/n*s,0,34),y=Phaser.Math.Clamp(this.p.y+vy/n*s,0,34);if(!this.trees.some(t=>Math.hypot(t.x-x,t.y-y)<.45)){this.p={x,y};moving=true}}
+this.phase+=moving?dt*11:0;let [a,b]=this.iso(this.p.x,this.p.y),step=moving?Math.sin(this.phase)*5:0,g=this.actor;g.clear();g.setDepth(b+.1);g.fillStyle(0x172018,.5);g.fillEllipse(a,b,24,10);g.lineStyle(6,0x494d43);g.lineBetween(a-4,b-14,a-5+step,b);g.lineBetween(a+4,b-14,a+5-step,b);g.fillStyle(0x783832);g.fillRoundedRect(a-9,b-34,18,22,4);g.lineStyle(4,0xd2a17b);g.lineBetween(a-9,b-30,a-12-step,b-18);g.lineBetween(a+9,b-30,a+12+step,b-18);g.fillStyle(0xd2a17b);g.fillCircle(a,b-40,7);g.fillStyle(0x39271c);g.fillEllipse(a,b-44,15,8);this.cameras.main.centerOn(a,b-20)}
+}
+new Phaser.Game({type:Phaser.AUTO,parent:'game',width:960,height:540,scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},fps:{target:30},scene:World});
