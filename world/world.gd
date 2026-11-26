@@ -31,6 +31,8 @@ var step_to := Vector2(START)
 var step_elapsed: float = WALK_SECONDS
 var step_duration: float = WALK_SECONDS
 var urban_count: int = 0
+var urban_lots: Array[Vector2i] = []
+var residents: Array[Dictionary] = []
 var attack_requested: bool = false
 var loot_gold: int = 0
 var xp: int = 0
@@ -104,7 +106,7 @@ func _ready() -> void:
 	ordered.add_child(enemy)
 	enemy.position = iso(enemy_pos)
 	var npcs: Dictionary = read_json("res://assets/npc_frames.json")
-	for info in [["knight","Guarda de Ashes",Vector2i(24,35)],["wandering_trader","Mercador",Vector2i(23,39)],["peasant_man1","Ferreiro",Vector2i(25,40)],["peasant_woman1","Moradora",Vector2i(20,39)]]:
+	for info in [["knight","Guarda de Ashes",Vector2i(24,35)],["wandering_trader","Mercador",Vector2i(23,39)],["peasant_man1","Ferreiro",Vector2i(25,40)],["peasant_woman1","Moradora",Vector2i(20,39)],["knight","Sentinela do portão",Vector2i(24,40)],["peasant_man1","Bram, carpinteiro",Vector2i(26,41)],["peasant_woman1","Elara, herbalista",Vector2i(27,43)],["knight","Capitão Roderic",Vector2i(30,42)],["peasant_man1","Oren, padeiro",Vector2i(35,43)],["wandering_trader","Merek, viajante",Vector2i(41,43)],["peasant_woman1","Irmã Helena",Vector2i(45,44)],["peasant_man1","Tomas, lenhador",Vector2i(18,45)],["knight","Vigia do leste",Vector2i(46,48)]]:
 		var person: Actor = Actor.new()
 		person.kind = "npc"
 		person.npc_name = info[0]
@@ -113,6 +115,7 @@ func _ready() -> void:
 		person.actor_label = info[1]
 		person.position = iso(Vector2(info[2]))
 		ordered.add_child(person)
+		residents.append({"actor":person,"name":info[1],"cell":Vector2(info[2])})
 	cam.position = hero.position + Vector2(0,-28)
 	cam.position_smoothing_enabled = true
 	cam.position_smoothing_speed = 12.0
@@ -135,7 +138,14 @@ func build_urban_extension() -> void:
 	var lots := [
 		[Vector2i(19,43),Rect2(516,1313,248,190),154.0],
 		[Vector2i(23,43),Rect2(772,1302,248,211),150.0],
-		[Vector2i(33,43),Rect2(1028,1314,248,188),132.0]
+		[Vector2i(33,43),Rect2(1028,1314,248,188),148.0],
+		[Vector2i(15,39),Rect2(1028,1314,248,188),144.0],
+		[Vector2i(42,41),Rect2(516,1313,248,190),164.0],
+		[Vector2i(46,42),Rect2(1818,1284,203,248),146.0],
+		[Vector2i(43,46),Rect2(1028,1314,248,188),148.0],
+		[Vector2i(47,46),Rect2(772,1302,248,211),150.0],
+		[Vector2i(19,50),Rect2(1818,1284,203,248),146.0],
+		[Vector2i(47,50),Rect2(1028,1314,248,188),144.0]
 	]
 	for lot in lots:
 		var cell_pos: Vector2i = lot[0]
@@ -161,6 +171,7 @@ func build_urban_extension() -> void:
 		for point in footprint:
 			grid.set_point_solid(point,true)
 		urban_count += 1
+		urban_lots.append(cell_pos)
 
 func valid(p: Vector2i) -> bool:
 	return grid.is_in_boundsv(p) and not grid.is_point_solid(p)
@@ -249,14 +260,34 @@ func interact() -> void:
 			gold += 100
 			xp += 100
 			message = "Contrato concluído: +100 ouro e XP"
-		elif gold >= 12:
-			gold -= 12
-			potions += 1
-			message = "Mercador: poção comprada por 12 ouro."
 		else:
-			message = "Mercador: poções por 12 ouro."
+			hud.open_shop()
+			message = "Mercador: escolha o que deseja comprar."
 	else:
-		message = "Aproxime-se do mercador ou do loot."
+		var best: Dictionary = {}
+		var distance: float = 2.0
+		for resident in residents:
+			var d: float = pos.distance_to(resident["cell"])
+			if d < distance:
+				best = resident
+				distance = d
+		if best.is_empty():
+			message = "Aproxime-se de um morador ou do loot."
+		else:
+			var lines: Dictionary = {"Elara, herbalista":"As ervas crescem junto às trilhas da floresta.","Capitão Roderic":"Os goblins ameaçam a estrada a leste.","Irmã Helena":"Que a luz proteja sua jornada.","Merek, viajante":"A vila está crescendo. Explore as novas ruas.","Bram, carpinteiro":"Estamos construindo novas moradias."}
+			message = str(best["name"]) + ": " + str(lines.get(best["name"],"Bem-vindo ao posto de Ashes."))
+
+func buy_potion() -> void:
+	if not playing or pos.distance_to(Vector2(23,39)) > 2.5:
+		message = "Aproxime-se do mercador."
+		return
+	if gold < 12:
+		message = "Ouro insuficiente."
+		return
+	gold -= 12
+	potions += 1
+	message = "Poção comprada por 12 ouro."
+	hud.update_view()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not playing or not is_instance_valid(hero):
@@ -385,7 +416,11 @@ func smoke() -> void:
 	assert(valid(START) and valid(HUNT))
 	assert(path(START,HUNT).size()>0)
 	assert(map.objects.size()>300)
-	assert(urban_count==3)
+	assert(urban_count==10)
+	assert(residents.size()==13)
+	for lot in urban_lots:
+		assert(not valid(lot))
+		assert(path(START,lot+Vector2i(1,0)).size()>0)
 	assert(not valid(Vector2i(19,43)))
 	assert(valid(Vector2i(24,38)))
 	assert(path(START,HUNT).size()>0)

@@ -9,6 +9,8 @@ var status: Label
 var login: Control
 var bag: PanelContainer
 var bag_text: Label
+var shop: PanelContainer
+var shop_info: Label
 
 func panel_style() -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
@@ -39,7 +41,7 @@ func build(w) -> void:
 	root.add_child(top)
 	top.position=Vector2(16,16)
 	top.add_theme_stylebox_override("panel",panel_style())
-	var title:=make_label("KINGDOM OF ASHES  /  REBORN 0.3",18)
+	var title:=make_label("KINGDOM OF ASHES  /  REBORN 0.4",18)
 	top.add_child(title)
 	var side:=PanelContainer.new()
 	root.add_child(side)
@@ -111,7 +113,30 @@ func build(w) -> void:
 	bag_text=make_label("",15)
 	bag.add_child(bag_text)
 	bag.hide()
+	shop=PanelContainer.new()
+	root.add_child(shop)
+	shop.position=Vector2(16,220)
+	shop.custom_minimum_size=Vector2(260,160)
+	shop.add_theme_stylebox_override("panel",panel_style())
+	var stock:=VBoxContainer.new()
+	shop.add_child(stock)
+	stock.add_child(make_label("MERCADOR DE ASHES",18))
+	shop_info=make_label("Poção de cura · 12 ouro",14)
+	stock.add_child(shop_info)
+	var buy:=Button.new()
+	buy.text="Comprar poção"
+	buy.pressed.connect(world.buy_potion)
+	stock.add_child(buy)
+	var close:=Button.new()
+	close.text="Fechar"
+	close.pressed.connect(func(): shop.hide())
+	stock.add_child(close)
+	shop.hide()
 	build_login(root)
+	update_view()
+
+func open_shop() -> void:
+	shop.show()
 	update_view()
 
 func toggle_bag() -> void:
@@ -170,6 +195,10 @@ func update_view() -> void:
 	if not is_instance_valid(life):
 		return
 	life.value=world.hero.hp
+	if is_instance_valid(shop):
+		if world.pos.distance_to(Vector2(23,39))>2.5:
+			shop.hide()
+		shop_info.text="Poção de cura · 12 ouro | Saldo: %d" % world.gold
 	label.text="VIDA  %d/100    "%world.hero.hp
 	status.text="%s | Nv. %d · Ouro: %d · Abates: %d"%[world.message,world.level,world.gold,world.kills]
 	if is_instance_valid(bag_text):
