@@ -1,0 +1,1 @@
+Central district adapted from FLARE Black Oak City by the FLARE contributors, CC BY-SA 3.0. Source: https://raw.githubusercontent.com/flareteam/flare-game/c641d2ac2801617f6be3e327454de39250d489b9/mods/empyrean_campaign/maps/black_oak_city.txt. Cropped and adapted as a provisional capital district. See ../classic/LICENSE.txt and CREDITS.txt.
