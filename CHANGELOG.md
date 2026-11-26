@@ -148,3 +148,5 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - 19.5: cópia anterior do save, recuperação de JSON inválido, exportação manual de backup e limites básicos de valores. Testes de recuperação; não é revisão integral de balanceamento.
 - 20.0: servidor HTTP exclusivamente loopback de desenvolvimento, cadastro/login com scrypt, sessão HttpOnly, proteção de origem e backup isolado por conta; página local de conta. Não publicado e não multiplayer autoritativo.
 - 21.0: quatro trajes gratuitos de teste por nível, seleção persistente, opção de ocultar/remover a skin sem alterar atributos. Variações do atlas existente; pagamentos e loja real desativados. Guia BETA-21.md e testes de autenticação, isolamento, backup e invariância de atributos. Publicação beta depende dos testes.
+
+- 21.0 revisão: importação de backup JSON com validação de formato e posição, confirmação explícita e bloqueio do autosave durante a recarga; link de contas somente quando o servidor local responde. Teste de restauração em armazenamento simulado.
