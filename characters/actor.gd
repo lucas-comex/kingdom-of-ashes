@@ -85,7 +85,7 @@ func _draw() -> void:
 			return
 		var row: Array = frames[npc_name][7]
 		for candidate in frames[npc_name]:
-			if int(candidate[0]) == 0 and int(candidate[1]) == 7:
+			if int(candidate[0]) == (frame if state=="run" else 0) and int(candidate[1]) == direction:
 				row = candidate
 				break
 		var sz: Vector2 = Vector2(row[4],row[5]) * 0.44

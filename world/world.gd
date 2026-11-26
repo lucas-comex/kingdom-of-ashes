@@ -23,6 +23,21 @@ var static_objects: Array[Sprite2D] = []
 var hud_clock: float = 0.0
 var cull_clock: float = 0.0
 var has_gear: bool = false
+var mouse_walk: bool = false
+var repath_clock: float = 0.0
+var aim: int = -1
+var mana: float = 100.0
+var cooldowns: Array[float] = [0.0,0.0,0.0,0.0]
+const SKILL_NAMES = ["Corte amplo","Lança arcana","Campo gélido","Fúria das cinzas"]
+const SKILL_RANGE = [2.6,6.0,5.0,5.0]
+const SKILL_COST = [8.0,14.0,20.0,35.0]
+const SKILL_CD = [3.0,5.0,8.0,18.0]
+var effect_time: float = 0.0
+var effect_from := Vector2.ZERO
+var effect_to := Vector2.ZERO
+var effect_kind: int = 0
+var slow_time: float = 0.0
+var npc_clock: float = 0.0
 var enemy_pos := Vector2(HUNT)
 var route: Array[Vector2i] = []
 var enemy_route: Array[Vector2i] = []
@@ -164,7 +179,9 @@ func load_area(next_area: String) -> void:
 		person.actor_label = info[1]
 		person.position = iso(Vector2(info[2]))
 		ordered.add_child(person)
-		residents.append({"actor":person,"name":info[1],"cell":Vector2(info[2])})
+		var anchor: Vector2 = Vector2(info[2])
+		var npc_route: Array[Vector2i] = []
+		residents.append({"actor":person,"name":info[1],"cell":anchor,"anchor":anchor,"route":npc_route,"wait":randf_range(1.0,4.0),"fixed":str(info[1]) in ["Mercador","Ferreiro","Sentinela do portão"]})
 
 	pos = Vector2(CAPITAL_START if area=="capital" else START)
 	step_from=pos
@@ -174,7 +191,13 @@ func load_area(next_area: String) -> void:
 	hero.position=iso(pos)
 	enemy.visible=area=="outpost"
 	target=false
+	route.clear()
+	mouse_walk=false
+	aim=-1
+	effect_time=0.0
+	slow_time=0.0
 	enemy_route.clear()
+	queue_redraw()
 	attack_requested=false
 	attack_time=0.0
 	if area=="outpost":
@@ -185,7 +208,7 @@ func load_area(next_area: String) -> void:
 	if cam.is_inside_tree():
 		cam.reset_smoothing()
 	cull_objects()
-	message="Bem-vindo à capital. F no portão oeste leva à região de caça." if area=="capital" else "F junto ao posto de viagem retorna à capital."
+	message="Clique esquerdo para andar. Botão direito no portão oeste para viajar." if area=="capital" else "Botão direito no posto de viagem para voltar."
 
 func cull_objects() -> void:
 	var center: Vector2 = hero.position
@@ -263,8 +286,183 @@ func path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 	return out
 
 func walk_to(p: Vector2i) -> void:
-	destination = nearest(p)
-	route = path(cell(pos),destination)
+	var origin: Vector2i = cell(step_to) if step_elapsed<step_duration else cell(pos)
+	var requested: Vector2i = p.clamp(Vector2i.ZERO,Vector2i(63,63))
+	if requested==destination and not route.is_empty():
+		return
+	destination=requested
+	route.clear()
+	if requested==origin:
+		return
+	if valid(requested):
+		route=path(origin,requested)
+		if not route.is_empty():
+			return
+	# Clicks on buildings find an accessible nearby tile rather than crossing walls.
+	for radius in range(1,5):
+		for dy in range(-radius,radius+1):
+			for dx in range(-radius,radius+1):
+				if maxi(absi(dx),absi(dy))!=radius:
+					continue
+				var candidate := requested+Vector2i(dx,dy)
+				if not valid(candidate):
+					continue
+				if candidate==origin:
+					return
+				var candidate_route := path(origin,candidate)
+				if not candidate_route.is_empty():
+					route=candidate_route
+					return
+
+func move_route(dt: float) -> bool:
+	var remaining: float = dt
+	var moved: bool = false
+	while remaining>0.00001:
+		if step_elapsed>=step_duration:
+			if route.is_empty():
+				break
+			var from := cell(pos)
+			var next: Vector2i = route.pop_front()
+			if next==from:
+				continue
+			if not can_step(from,next):
+				route.clear()
+				break
+			step_from=Vector2(from)
+			step_to=Vector2(next)
+			step_duration=WALK_SECONDS*Vector2(next-from).length()
+			step_elapsed=0.0
+			hero.face(iso(step_to)-iso(step_from))
+		var part: float = minf(remaining,step_duration-step_elapsed)
+		step_elapsed=minf(step_duration,step_elapsed+part)
+		remaining-=part
+		pos=step_from.lerp(step_to,step_elapsed/step_duration)
+		moved=true
+	return moved
+
+func stop_route() -> void:
+	mouse_walk=false
+	route.clear()
+
+func tick_residents(dt: float) -> void:
+	for resident in residents:
+		var actor: Actor = resident["actor"]
+		var at: Vector2 = resident["cell"]
+		actor.visible=at.distance_to(pos)<15.0
+		if resident["fixed"] or not actor.visible:
+			continue
+		var steps: Array[Vector2i] = resident["route"]
+		if steps.is_empty():
+			resident["wait"]=float(resident["wait"])-dt
+			if resident["wait"]<=0.0:
+				resident["wait"]=randf_range(2.0,5.0)
+				var anchor: Vector2 = resident["anchor"]
+				var to := cell(anchor)+Vector2i(randi_range(-3,3),randi_range(-3,3))
+				if valid(to) and to.distance_to(cell(pos))>1.0:
+					steps=path(cell(at),to)
+					resident["route"]=steps
+		var next := advance(at,steps,dt,1.15)
+		var moving: bool = next.distance_to(at)>.0001
+		if moving:
+			actor.face(iso(next)-iso(at))
+			resident["cell"]=next
+			actor.position=iso(next)
+		actor.animate("run" if moving else "stance",dt)
+
+func begin_aim(index: int) -> void:
+	if not playing:
+		return
+	stop_route()
+	if aim==index:
+		aim=-1
+	elif cooldowns[index]>0.0:
+		message="Habilidade em recarga."
+	elif mana<SKILL_COST[index]:
+		message="Mana insuficiente."
+	else:
+		aim=index
+		message=SKILL_NAMES[index]+" • mire e clique. Esc cancela."
+	queue_redraw()
+
+func clear_line(from: Vector2, to: Vector2) -> bool:
+	var samples: int = maxi(1,ceili(from.distance_to(to)*5.0))
+	for n in range(1,samples+1):
+		if not valid(cell(from.lerp(to,float(n)/samples))):
+			return false
+	return true
+
+func cast_at(point: Vector2) -> bool:
+	if aim<0:
+		return false
+	var index: int = aim
+	var d: Vector2 = point-pos
+	if area!="outpost":
+		message="Habilidades de combate apenas fora da cidade."
+		aim=-1
+		queue_redraw()
+		return false
+	if d.length()>SKILL_RANGE[index] or not clear_line(pos,point):
+		message="Alvo fora de alcance ou atrás de obstáculo."
+		return false
+	if cooldowns[index]>0.0 or mana<SKILL_COST[index]:
+		aim=-1
+		return false
+	var hit: bool = false
+	if enemy.hp>0 and clear_line(pos,enemy_pos):
+		match index:
+			0:
+				hit=enemy_pos.distance_to(pos)<=2.6 and d.normalized().dot((enemy_pos-pos).normalized())>=.45
+			1:
+				var segment: Vector2 = Geometry2D.get_closest_point_to_segment(enemy_pos,pos,point)
+				hit=segment.distance_to(enemy_pos)<=.70
+			2:
+				hit=enemy_pos.distance_to(point)<=1.8
+			3:
+				hit=enemy_pos.distance_to(point)<=2.5
+	mana-=SKILL_COST[index]
+	cooldowns[index]=SKILL_CD[index]
+	hero.face(iso(point)-iso(pos))
+	attack_time=.40
+	effect_kind=index
+	effect_from=iso(pos)
+	effect_to=iso(point)
+	effect_time=.4
+	aim=-1
+	message=SKILL_NAMES[index]+(" acertou!" if hit else " • errou o alvo.")
+	if hit:
+		if index==2:
+			slow_time=3.0
+		damage_enemy([22,30,20,55][index])
+	queue_redraw()
+	return true
+
+func _draw() -> void:
+	if not playing:
+		return
+	if not route.is_empty():
+		draw_arc(iso(Vector2(route.back())),11.0,0.0,TAU,24,Color("#d8c88d"),2.0,true)
+	if aim>=0:
+		var at := iso(pos)
+		var reach: float = SKILL_RANGE[aim]
+		var ellipse := PackedVector2Array()
+		for n in range(65):
+			var angle: float = TAU*n/64.0
+			ellipse.append(iso(pos+Vector2(cos(angle),sin(angle))*reach))
+		draw_polyline(ellipse,Color(0.77,0.83,0.93,.8),2.0,true)
+		var mouse := get_global_mouse_position()
+		var allowed: bool = uniso(mouse).distance_to(pos)<=reach
+		var tint := Color("#a4c5ee") if allowed else Color("#ce6666")
+		draw_line(at,mouse,tint,2.0,true)
+		var radius: float = 18.0 if aim<2 else (46.0 if aim==2 else 65.0)
+		draw_arc(mouse,radius,0.0,TAU,48,tint,2.0,true)
+	if effect_time>0.0:
+		var tint: Color = [Color("#e4c08a"),Color("#94cfff"),Color("#a8e3ec"),Color("#e67843")][effect_kind]
+		if effect_kind<2:
+			draw_line(effect_from,effect_to,tint,5.0,true)
+		else:
+			draw_arc(effect_to,46.0 if effect_kind==2 else 65.0,0.0,TAU,48,tint,4.0,true)
+	if target and enemy.hp>0 and area=="outpost":
+		draw_arc(iso(enemy_pos),19.0,0.0,TAU,36,Color("#dba85b"),2.0,true)
 
 func advance(p: Vector2, steps: Array[Vector2i], dt: float, speed: float) -> Vector2:
 	if steps.is_empty():
@@ -397,24 +595,68 @@ func buy_potion() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not playing or not is_instance_valid(hero):
 		return
-	if event is InputEventMouseButton and event.pressed:
+	if event is InputEventMouseButton:
+		if not event.pressed:
+			if event.button_index==MOUSE_BUTTON_LEFT:
+				mouse_walk=false
+			return
+		var click: Vector2 = get_global_mouse_position()
 		match event.button_index:
 			MOUSE_BUTTON_WHEEL_UP:
 				cam.zoom = Vector2.ONE * minf(1.7,cam.zoom.x+.1)
 			MOUSE_BUTTON_WHEEL_DOWN:
 				cam.zoom = Vector2.ONE * maxf(.8,cam.zoom.x-.1)
 			MOUSE_BUTTON_LEFT:
-				var click: Vector2 = get_global_mouse_position()
-				if area=="outpost" and click.distance_to(enemy.position-Vector2(0,24)) < 36:
-					if enemy.hp > 0:
-						target = true
-						message = "Alvo selecionado."
-					else:
-						collect_loot()
+				var enemy_clicked: bool = area=="outpost" and click.distance_to(enemy.position-Vector2(0,24))<36.0
+				if aim>=0:
+					cast_at(enemy_pos if enemy_clicked and enemy.hp>0 else uniso(click))
+				elif enemy_clicked:
+					stop_route()
+					target=enemy.hp>0
+					message="Alvo selecionado. Espaço ou QWER para atacar." if target else "Botão direito para saquear."
 				else:
-					target = false
+					target=false
+					mouse_walk=true
+					repath_clock=.14
+					walk_to(cell(uniso(click)))
+				queue_redraw()
+			MOUSE_BUTTON_RIGHT:
+				if aim>=0:
+					aim=-1
+					queue_redraw()
+					return
+				stop_route()
+				var clicked_cell := uniso(click)
+				if area=="outpost" and enemy.hp<=0 and click.distance_to(enemy.position-Vector2(0,12))<40.0:
+					collect_loot()
+				elif clicked_cell.distance_to(Vector2(CAPITAL_GATE if area=="capital" else OUTPOST_GATE))<=2.0:
+					if pos.distance_to(Vector2(CAPITAL_GATE if area=="capital" else OUTPOST_GATE))<=2.0:
+						load_area("outpost" if area=="capital" else "capital")
+					else:
+						message="Aproxime-se do portão."
+				else:
+					var clicked: bool = false
+					for resident in residents:
+						var actor: Actor = resident["actor"]
+						if click.distance_to(actor.position-Vector2(0,25))<33.0:
+							clicked=true
+							if pos.distance_to(resident["cell"])<=2.5:
+								interact()
+							else:
+								message="Aproxime-se do morador."
+							break
+					if not clicked:
+						message="Botão direito: interaja com portões, NPCs e corpos."
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.physical_keycode:
+			KEY_Q: begin_aim(0)
+			KEY_W: begin_aim(1)
+			KEY_E: begin_aim(2)
+			KEY_R: begin_aim(3)
+			KEY_ESCAPE:
+				aim=-1
+				stop_route()
+				queue_redraw()
 			KEY_SPACE:
 				attack_requested = true
 			KEY_F:
@@ -423,7 +665,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				use_potion()
 			KEY_I:
 				hud.toggle_bag()
-			KEY_E:
+			KEY_K:
 				toggle_equipment()
 			KEY_G:
 				toggle_gender()
@@ -434,7 +676,7 @@ func buy_gear() -> void:
 		return
 	gold-=60
 	has_gear=true
-	message="Conjunto adquirido. E para equipar."
+	message="Conjunto adquirido. K para equipar."
 	hud.update_view()
 
 func toggle_equipment() -> void:
@@ -449,9 +691,12 @@ func toggle_gender() -> void:
 	hero.gender = "female" if hero.gender == "male" else "male"
 	hero.queue_redraw()
 
-func damage_enemy() -> void:
-	var damage: int = 20 if hero.equipment else 10
+func damage_enemy(amount: int = -1) -> void:
+	if enemy.hp<=0:
+		return
+	var damage: int = amount if amount>=0 else (20 if hero.equipment else 10)
 	enemy.hp = maxi(0,enemy.hp-damage)
+	enemy.queue_redraw()
 	message = "Golpe certeiro · %d de dano" % damage
 	if enemy.hp == 0:
 		kills += 1
@@ -472,11 +717,29 @@ func _physics_process(dt: float) -> void:
 		return
 	attack_time = maxf(0,attack_time-dt)
 	enemy_attack = maxf(0,enemy_attack-dt)
-	var screen := read_movement()
-	var moving := move_input(screen,dt)
+	mana=minf(100.0,mana+dt*2.0)
+	for n in range(4):
+		cooldowns[n]=maxf(0.0,cooldowns[n]-dt)
+	slow_time=maxf(0.0,slow_time-dt)
+	if effect_time>0.0:
+		effect_time=maxf(0.0,effect_time-dt)
+		queue_redraw()
+	if mouse_walk and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		mouse_walk=false
+	repath_clock-=dt
+	if mouse_walk and aim<0 and repath_clock<=0.0:
+		repath_clock=.14
+		walk_to(cell(uniso(get_global_mouse_position())))
+	var moving := move_route(dt)
+	if moving or aim>=0 or target:
+		queue_redraw()
+	npc_clock+=dt
+	if npc_clock>=.10:
+		tick_residents(npc_clock)
+		npc_clock=0.0
 	if attack_requested:
 		attack_requested = false
-		if area=="outpost" and enemy.hp > 0 and pos.distance_to(enemy_pos)<=1.5 and attack_time<=0:
+		if target and area=="outpost" and enemy.hp > 0 and pos.distance_to(enemy_pos)<=1.5 and attack_time<=0 and clear_line(pos,enemy_pos):
 			target = true
 			hero.face(iso(enemy_pos)-iso(pos))
 			attack_time=0.52
@@ -498,13 +761,13 @@ func _physics_process(dt: float) -> void:
 			if think<=0:
 				think=.35
 				enemy_route=path(cell(enemy_pos),cell(pos))
-			enemy_pos=advance(enemy_pos,enemy_route,dt,1.65)
+			enemy_pos=advance(enemy_pos,enemy_route,dt,0.85 if slow_time>0.0 else 1.65)
 		elif distance<=1.4:
 			enemy_route.clear()
 			enemy.face(iso(pos)-iso(enemy_pos))
 			if enemy_attack<=0:
 				enemy_attack=.9
-				hero.hp=maxi(0,hero.hp-8)
+				hero.hp=maxi(0,hero.hp-(5 if hero.equipment else 8))
 		else:
 			enemy_route.clear()
 		if enemy_pos.distance_to(old)>0.001:
@@ -515,6 +778,7 @@ func _physics_process(dt: float) -> void:
 		respawn-=dt
 		if respawn<=0:
 			enemy.hp=enemy.max_hp
+			enemy.queue_redraw()
 			loot_gold=0
 			enemy_pos=Vector2(HUNT)
 			enemy.state="stance"
@@ -623,7 +887,24 @@ func smoke() -> void:
 	assert(not hero.equipment)
 	toggle_gender()
 	assert(hero.gender=="female")
-	print("REBORN SMOKE PASS: authored map, routing, sprites, equipment and combat")
+	load_area("capital")
+	walk_to(CAPITAL_GATE)
+	assert(not route.is_empty())
+	for n in range(1000):
+		if not move_route(.05):
+			break
+	assert(pos.distance_to(Vector2(CAPITAL_GATE))<.01)
+	assert(not move_route(.1))
+	load_area("outpost")
+	enemy.hp=60
+	enemy_pos=Vector2(HUNT)
+	pos=Vector2(HUNT)-Vector2(1,0)
+	mana=100
+	aim=0
+	assert(cast_at(enemy_pos))
+	assert(enemy.hp==38 and mana==92 and cooldowns[0]>0.0)
+	assert(not cast_at(enemy_pos))
+	print("REBORN SMOKE PASS: mouse routes, aimed skills, equipment and combat")
 	get_tree().quit()
 
 func capture() -> void:

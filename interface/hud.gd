@@ -16,6 +16,8 @@ var fps_label: Label
 var quest_panel: PanelContainer
 var quest_text: Label
 var status_cache: String = ""
+var skill_labels: Array[Label] = []
+var mana_label: Label
 
 func panel_style() -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
@@ -46,7 +48,7 @@ func build(w) -> void:
 	root.add_child(top)
 	top.position=Vector2(16,16)
 	top.add_theme_stylebox_override("panel",panel_style())
-	var title:=make_label("KINGDOM OF ASHES  /  REBORN 0.5.1",18)
+	var title:=make_label("KINGDOM OF ASHES  /  REBORN 0.6",18)
 	top.add_child(title)
 	var side:=PanelContainer.new()
 	root.add_child(side)
@@ -76,7 +78,7 @@ func build(w) -> void:
 	details=make_label("Equipamento",14)
 	col.add_child(details)
 	var e:=Button.new()
-	e.text="Equipar [E]"
+	e.text="Equipar [K]"
 	e.pressed.connect(world.toggle_equipment)
 	col.add_child(e)
 	var g:=Button.new()
@@ -88,7 +90,7 @@ func build(w) -> void:
 	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	bottom.offset_left=16
 	bottom.offset_right=-16
-	bottom.offset_top=-100
+	bottom.offset_top=-142
 	bottom.offset_bottom=-16
 	bottom.add_theme_stylebox_override("panel",panel_style())
 	var box:=VBoxContainer.new()
@@ -106,6 +108,8 @@ func build(w) -> void:
 	fill.set_corner_radius_all(3)
 	life.add_theme_stylebox_override("fill",fill)
 	line.add_child(life)
+	mana_label=make_label("MANA 100/100",14)
+	line.add_child(mana_label)
 	var spacer:=Control.new()
 	spacer.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	line.add_child(spacer)
@@ -114,7 +118,19 @@ func build(w) -> void:
 	status.custom_minimum_size=Vector2(220,20)
 	status.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	box.add_child(status)
-	var help:=make_label("WASD/setas • Espaço: atacar • F: interagir • I: mochila • J: poção • Scroll: zoom",12)
+	var skills:=HBoxContainer.new()
+	box.add_child(skills)
+	for n in range(4):
+		var skill:=PanelContainer.new()
+		skill.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+		skill.add_theme_stylebox_override("panel",panel_style())
+		skill.mouse_filter=Control.MOUSE_FILTER_IGNORE
+		skills.add_child(skill)
+		var caption:=make_label("",12)
+		caption.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+		skill.add_child(caption)
+		skill_labels.append(caption)
+	var help:=make_label("Esquerdo: andar / mirar • Direito: interagir • Espaço: atacar • I: mochila • J: poção",12)
 	box.add_child(help)
 	bag=PanelContainer.new()
 	root.add_child(bag)
@@ -215,6 +231,10 @@ func update_view() -> void:
 	if not is_instance_valid(life):
 		return
 	life.value=world.hero.hp
+	mana_label.text="MANA %d/100" % int(world.mana)
+	for n in range(skill_labels.size()):
+		var cd: float = world.cooldowns[n]
+		skill_labels[n].text="%s · %s%s" % [["Q","W","E","R"][n],world.SKILL_NAMES[n],(" · %.1fs" % cd) if cd>0.0 else (" · MIRA" if world.aim==n else "")]
 	if is_instance_valid(shop):
 		if world.pos.distance_to(world.merchant_cell())>2.5:
 			shop.hide()
