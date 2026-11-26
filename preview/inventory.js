@@ -1,0 +1,29 @@
+/* 15.4 Inventory presentation and drag/drop. Counts remain authoritative in World. */
+(function(){
+'use strict';
+const IDS=['gold','meat','potions','wood','herbs','cooked'];
+const labels={gold:'Ouro',meat:'Carne',potions:'Poções',wood:'Madeira',herbs:'Ervas',cooked:'Carne assada'};
+const icons={gold:'gold',meat:'meat',potions:'potion',wood:'wood',herbs:'herb',cooked:'cooked'};
+const commands={meat:'H',potions:'J',cooked:'T'};
+const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
+const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+let order=read('koa-preview-bag-order',IDS);if(!Array.isArray(order))order=IDS;order=[...new Set([...order.filter(k=>IDS.includes(k)),...IDS])];
+let layouts=read('koa-preview-panel-layout',{});if(!layouts||typeof layouts!=='object'||Array.isArray(layouts))layouts={};
+let drag=null,stats=null,refresh=null;
+const comparison=(s,id)=>{const v=s.relicCatalog[id];if(!v)return '';const old=s.relicCatalog[s.relicEquipped[v.slot]]||{};return ['attack','defense','crit'].map((k,i)=>{const d=(v[k]||0)-(old[k]||0),n=i?Math.round(d*100):d;return ['ATQ','DEF','CRIT'][i]+': '+(n>0?'+':'')+n+(i?'%':'')}).join(' · ')};
+function move(id,before){if(!IDS.includes(id)||!IDS.includes(before)||id===before)return false;const a=order.indexOf(id),b=order.indexOf(before);[order[a],order[b]]=[order[b],order[a]];write('koa-preview-bag-order',order);refresh?.();return true}
+function sort(){order=IDS.slice();write('koa-preview-bag-order',order);refresh?.()}
+function count(id){if(!stats)return 0;if(IDS.includes(id))return Math.max(0,Math.floor(stats[id]||0));if(id.startsWith('relic:'))return Number(stats.relicBag.includes(id.slice(6)));if(id.startsWith('gear:'))return Number(!!stats[id.slice(5)]);return 0}
+function name(id){return labels[id]||stats?.relicCatalog[id.slice(6)]?.name||({sword:'Espada de aço',armor:'Armadura de aço',helmet:'Capacete de ferro',shield:'Escudo do Guardião'})[id.slice(5)]||'Item'}
+function requestDrop(id){const n=count(id);if(!n)return false;const box=document.getElementById('dropEditor');if(n===1)return window.koaDrop(id,1);box.dataset.item=id;document.getElementById('dropTitle').textContent='Largar '+name(id);const input=document.getElementById('dropQuantity');input.max=n;input.value=1;document.getElementById('dropAvailable').textContent='Disponível: '+n;box.hidden=false;input.focus();return true}
+function setup(refreshFn){refresh=refreshFn;const root=document.getElementById('play'),box=document.getElementById('dropEditor');document.getElementById('dropConfirm').onclick=()=>{const id=box.dataset.item,n=Number(document.getElementById('dropQuantity').value);if(!Number.isSafeInteger(n)||n<1||n>count(id)){document.getElementById('dropAvailable').textContent='Quantidade inválida. Disponível: '+count(id);return}if(window.koaDrop(id,n))box.hidden=true};document.getElementById('dropCancel').onclick=()=>box.hidden=true;
+root.addEventListener('dragstart',e=>{const el=e.target.closest('[data-drag-item]');if(!el||!count(el.dataset.dragItem)){e.preventDefault();return}drag=el.dataset.dragItem;e.dataTransfer.setData('text/plain',drag);e.dataTransfer.effectAllowed='move';document.documentElement.classList.add('koaDragging')});
+root.addEventListener('dragend',()=>{drag=null;document.documentElement.classList.remove('koaDragging')});
+root.addEventListener('dragover',e=>{if(drag&&e.target.closest('[data-bag-order],[data-equip-slot],#game,.quickSlot')){e.preventDefault();e.dataTransfer.dropEffect='move'}});
+root.addEventListener('drop',e=>{if(!drag)return;const id=drag;drag=null;document.documentElement.classList.remove('koaDragging');const quick=e.target.closest('.quickSlot'),gear=e.target.closest('[data-equip-slot]'),bag=e.target.closest('[data-bag-order]'),world=e.target.closest('#game');if(!quick&&!gear&&!bag&&!world)return;e.preventDefault();if(quick){if(commands[id])window.KOA15.setHotkey(Number(quick.dataset.index),commands[id]);return}if(gear&&id.startsWith('relic:')){const key=id.slice(6);if(stats.relicCatalog[key]?.slot===gear.dataset.equipSlot&&stats.relicEquipped[gear.dataset.equipSlot]!==key)window.koaEquip(key);return}if(bag){move(id,bag.dataset.bagOrder);return}if(world)requestDrop(id)});
+}
+function remember(p){const parent=p.parentElement;if(!parent)return;const base=parent.getBoundingClientRect(),rect=p.getBoundingClientRect();layouts[p.dataset.kind]={x:rect.left-base.left,y:rect.top-base.top,w:rect.width,h:rect.height};write('koa-preview-panel-layout',layouts)}
+function restore(p){const v=layouts[p.dataset.kind],parent=p.parentElement;if(v&&parent&&[v.x,v.y,v.w,v.h].every(Number.isFinite)){const w=Math.max(180,Math.min(parent.clientWidth-8,v.w)),h=Math.max(90,Math.min(parent.clientHeight-8,v.h));p.style.width=w+'px';p.style.height=h+'px';p.style.right='auto';p.style.left=Math.max(0,Math.min(parent.clientWidth-w,v.x))+'px';p.style.top=Math.max(0,Math.min(parent.clientHeight-h,v.y))+'px'}if(typeof ResizeObserver!=='undefined'){let timer;const observer=new ResizeObserver(()=>{clearTimeout(timer);timer=setTimeout(()=>{if(p.isConnected)remember(p);else observer.disconnect()},350)});observer.observe(p);p.addEventListener('pointerup',()=>remember(p));p._koaResize=observer}}
+function reset(){layouts={};write('koa-preview-panel-layout',layouts);document.querySelectorAll('.rpgpanel').forEach(p=>{p._koaResize?.disconnect();p.remove()})}
+window.KOAInventory={get order(){return order.slice()},get dragging(){return !!drag},labels,icons,comparison,move,sort,requestDrop,setup,remember,restore,reset,update(s){stats=s}};
+})();
