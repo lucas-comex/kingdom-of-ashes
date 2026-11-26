@@ -39,9 +39,9 @@ function paint(canvas,p,dir='south',frame=0,gear=0,action='stance'){
  if(p.hair!=='shaved'||back){path([[hx-8,-65],[hx-8,-70],[hx-3,-74],[hx+5,-73],[hx+8,-69],[hx+7,-63],[hx+3,-69],[hx-2,-66],[hx-5,-64]],gradient(hx-8,-74,16,10,[shade(hair,1.65),hair,shade(hair,.65)]));if(back||p.hair==='long')path([[hx-7,-69],[hx+7,-69],[hx+7,-55],[hx+2,-52],[hx-7,-55]],hair);if(p.hair==='tied')ellipse(hx+6,-69,4,4,hair,'#302421')}
  if(helm){path([[hx-9,-65],[hx-8,-72],[hx,-76],[hx+8,-72],[hx+9,-65],[hx+6,-58],[hx+4,-65],[hx-4,-65],[hx-6,-58]],steel);line([[hx,-75],[hx,-66]],'#e6e3cf',1)}
  const hand=shoulders+2+swing;
- if(weapon||p.vocation==='warrior'){if(weapon){line([[hand,-28],[hand+8,-54-swing]],'#282b30',5);line([[hand,-28],[hand+8,-54-swing]],'#c4c8c5',3);line([[hand-3,-30],[hand+5,-28]],trim,2)}}
- if(p.vocation==='archer'){c.strokeStyle='#a78454';c.lineWidth=2.2;c.beginPath();c.moveTo(-hand,-55);c.quadraticCurveTo(-hand-12,-38,-hand,-18);c.stroke();line([[-hand,-55],[-hand,-18]],'#dbcaab',.65)}
- if(p.vocation==='sorcerer'||p.vocation==='druid'){line([[hand,-3],[hand+3,-62]],'#6d5136',2.8);ellipse(hand+3,-64,3.1,4,p.vocation==='druid'?'#9ba962':'#9b85c4','#e0cfac')}
+ if(p.vocation==='warrior'){if(weapon){line([[hand,-28],[hand+8,-54-swing]],'#282b30',5);line([[hand,-28],[hand+8,-54-swing]],'#c4c8c5',3);line([[hand-3,-30],[hand+5,-28]],trim,2)}}
+ if(weapon&&p.vocation==='archer'){c.strokeStyle='#a78454';c.lineWidth=2.2;c.beginPath();c.moveTo(-hand,-55);c.quadraticCurveTo(-hand-12,-38,-hand,-18);c.stroke();line([[-hand,-55],[-hand,-18]],'#dbcaab',.65)}
+ if(weapon&&(p.vocation==='sorcerer'||p.vocation==='druid')){line([[hand,-3],[hand+3,-62]],'#6d5136',2.8);ellipse(hand+3,-64,3.1,4,p.vocation==='druid'?'#9ba962':'#9b85c4','#e0cfac')}
  if(shield){path([[-shoulders-9,-40],[-shoulders+5,-40],[-shoulders+4,-29],[-shoulders-2,-24],[-shoulders-8,-29]],steel);line([[-shoulders-2,-38],[-shoulders-2,-28]],trim,1.1)}
  c.restore();
 }

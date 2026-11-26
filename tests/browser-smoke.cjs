@@ -107,6 +107,27 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      assert.ok(sprites.live.startsWith('koa-original-'),'live hero must use original customizable art');
      assert.equal(await page.evaluate(()=>window.KOAAppearance.get().gender),'female');
      assert.equal(await page.evaluate(()=>window.KOAAppearance.get().vocation),'archer');
+     const gearResult=await page.evaluate(()=>{
+       const w=window.koaGame.scene.getScenes(true)[0], results=[];
+       for(const [slot,bit] of [['helmet',2],['armor',1],['shield',4],['sword',8]]){
+         w.acquireCommonGear(slot);
+         const before=w.visualGear(), keyOn=w.unitTexture('hero','south',0,before,'stance');
+         const on=w.textures.get(keyOn).getSourceImage().toDataURL();
+         const removed=window.koaEquip('gear:'+slot), after=w.visualGear(),keyOff=w.unitTexture('hero','south',0,after,'stance');
+         const off=w.textures.get(keyOff).getSourceImage().toDataURL();
+         const owned=w.hasCommonGear(slot),stored=w.storedGear[slot]===true;
+         const equipped=window.koaEquip('gear:'+slot);
+         results.push({slot,removed,equipped,owned,stored,bitOn:!!(before&bit),bitOff:!(after&bit),pixelsChanged:on!==off,restored:!!(w.visualGear()&bit)});
+       }
+       return results;
+     });
+     for(const item of gearResult)for(const k of ['removed','equipped','owned','stored','bitOn','bitOff','pixelsChanged','restored'])assert.equal(item[k],true,item.slot+' '+k);
+     await page.locator('#tools [data-panel=gear]').click();
+     await page.locator('[data-kind=gear] [data-equip="gear:helmet"]').click();
+     await page.waitForFunction(()=>window.koaStats.storedGear.helmet===true&&!(window.koaStats.visualGear&2));
+     await page.locator('[data-kind=gear] [data-equip="gear:helmet"]').click();
+     await page.waitForFunction(()=>!!(window.koaStats.visualGear&2));
+     await page.locator('[data-kind=gear] header button').click();
      assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('koa-preview-appearance-v1')).skin),'#a86c45');
      console.log('FLARE character and equipment PASS',sprites);
      await page.locator('#quickEditMode').click();

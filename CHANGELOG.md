@@ -1,5 +1,13 @@
 # Kingdom of Ashes — Registro de desenvolvimento
 
+## 16.0.4 — Equipamento não é skin
+- Equipamentos comuns podem ser retirados e recolocados sem jogar o item no chão.
+- Coleção e equipamento ativo são estados separados, salvos e compatíveis com saves antigos.
+- Trocar equipamento raro no mesmo slot guarda o comum; retirada da peça não deixa a camada fixa.
+- Arcos e cajados não aparecem mais quando não há arma equipada.
+- Testes de mudança real de pixels ao equipar/retirar capacete, armadura, escudo e arma.
+- Validação pendente. Botas e anéis ainda não têm camadas visuais exclusivas; skins pagas permanecem futuras.
+
 ## 16.0.3 — Portal do reino e criador de personagens (experimental)
 - Nova tela inicial responsiva, com ilustração original SVG do reino, título em serifas medievais e opções de acesso.
 - Login/cadastro online são interfaces desativadas; nenhum dado de senha é coletado. O servidor de autenticação ainda não existe.
