@@ -133,3 +133,8 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - Testes de compra única, bônus, bloqueio em combate, arte e dimensão de mapa. Balanceamento, aparência e FPS pendentes. Não são continentes separados; cadastro, rede e loja premium continuam ausentes.
 
 - 19.2 validação: atualizar a expectativa de 45 para 57 portas acessíveis após acrescentar 12 edifícios; testar explicitamente as três novas rotas e as portas novas.
+
+## 19.3 — Equipment Anchor Pass
+- Posições de cabeça, mãos, tronco e pés revisadas sobre os 16 quadros originais. Ajuste ao pixel opaco do corpo, espelhamento e transformação lateral mantidos.
+- Armas/escudos giram em torno do cabo/empunhadura do recorte, com ordem de profundidade por vista; mão sobre o cabo quando em primeiro plano. Armadura, calças e botas limitadas pela máscara alfa do corpo; botas separadas por pé. Capacete acompanha a cabeça. Sem alteração em inventário, atributos ou saves.
+- Teste de contato dos pontos de ancoragem, máscara de roupas e presença da arma nas 16 poses, além das regressões. Quatro vistas aproximadas, não oito desenhos independentes; poses de combate ainda transformações da arte existente. Validação visual e desempenho no dispositivo pendentes.
