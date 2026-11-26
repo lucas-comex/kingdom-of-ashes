@@ -38,10 +38,18 @@ jobs:
           mkdir -p artifacts
           KOA_SCREENSHOT="$PWD/artifacts/reborn.png" timeout 60 xvfb-run -a Godot_v4.4.1-stable_linux.x86_64 --path . --rendering-method gl_compatibility -- --capture
           test -s artifacts/reborn.png
+      - name: Build standalone browser version
+        run: |
+          curl -fL --retry 3 -o /tmp/templates.tpz https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz
+          mkdir -p /tmp/koa-templates "$HOME/.local/share/godot/export_templates/4.4.1.stable" artifacts/web
+          unzip -q /tmp/templates.tpz -d /tmp/koa-templates
+          cp /tmp/koa-templates/templates/web* "$HOME/.local/share/godot/export_templates/4.4.1.stable/"
+          Godot_v4.4.1-stable_linux.x86_64 --headless --path . --export-release Web "$PWD/artifacts/web/index.html" 2>&1 | tee /tmp/export.log
+          test -s artifacts/web/index.html && test -s artifacts/web/index.wasm && test -s artifacts/web/index.pck
       - name: Package Godot project
         run: |
           mkdir -p artifacts
-          zip -qr artifacts/Kingdom-of-Ashes-Reborn.zip project.godot world characters interface assets README.md .gitignore -x '*.import' '*.uid'
+          zip -qr artifacts/Kingdom-of-Ashes-Reborn.zip project.godot export_presets.cfg world characters interface assets README.md .gitignore -x '*.import' '*.uid'
       - uses: actions/upload-artifact@v4
         with:
           name: Kingdom-of-Ashes-Reborn

@@ -28,7 +28,8 @@ func animate(next_state: String, dt: float) -> void:
 		age = 0.0
 	age += dt
 	var n: int = 4 if state == "run" or state == "swing" else (3 if state == "die" else 1)
-	var new_frame: int = mini(n - 1, int(age / 0.12)) if state == "swing" or state == "die" else int(age / 0.12) % n
+	var cadence: float = .095 if state == "run" else .12
+	var new_frame: int = mini(n - 1, int(age / cadence)) if state == "swing" or state == "die" else int(age / cadence) % n
 	if new_frame != frame:
 		frame = new_frame
 	queue_redraw()
@@ -51,10 +52,10 @@ func _draw() -> void:
 		layer("boots" if equipment else "feet")
 		layer("legs" if equipment else "pants")
 		layer("armor" if equipment else "shirt")
-		layer("hands")
 		layer("helmet" if equipment else "head")
 		if equipment and direction > 2:
 			layer("blade")
+		layer("hands")
 		if equipment and (direction < 4 or direction == 7):
 			layer("shield")
 	elif kind == "goblin":

@@ -1,7 +1,8 @@
 extends Node2D
 const Actor = preload("res://characters/actor.gd")
 const HUD = preload("res://interface/hud.gd")
-const STEP: float = 3.4
+const STEP: float = 2.65
+const WALK_SECONDS: float = 1.0 / STEP
 const START = Vector2i(24,38)
 const HUNT = Vector2i(32,38)
 var map: Dictionary
@@ -23,7 +24,17 @@ var think: float = 0.0
 var respawn: float = 0.0
 var gold: int = 0
 var kills: int = 0
-var message: String = "WASD ou clique para andar • Espaço para atacar"
+var message: String = "WASD • Espaço para atacar • F para saquear"
+var playing: bool = false
+var step_from := Vector2(START)
+var step_to := Vector2(START)
+var step_elapsed: float = WALK_SECONDS
+var attack_requested: bool = false
+var loot_gold: int = 0
+var xp: int = 0
+var level: int = 1
+var potions: int = 3
+var quest_claimed: bool = false
 var tex: Dictionary = {}
 
 func read_json(path: String) -> Dictionary:
@@ -79,6 +90,7 @@ func _ready() -> void:
 			hero.textures[key] = image("res://assets/classic/"+str(key)+".webp")
 	ordered.add_child(hero)
 	hero.position = iso(pos)
+	hero.scale = Vector2(.88,.88)
 	enemy = Actor.new()
 	enemy.kind = "goblin"
 	enemy.frames = read_json("res://assets/imported/goblin.json")
@@ -106,6 +118,8 @@ func _ready() -> void:
 	hud = HUD.new()
 	add_child(hud)
 	hud.build(self)
+	if "--smoke" in OS.get_cmdline_user_args() or "--capture" in OS.get_cmdline_user_args():
+		start_game()
 	if "--smoke" in OS.get_cmdline_user_args():
 		call_deferred("smoke")
 	elif "--capture" in OS.get_cmdline_user_args():
@@ -149,23 +163,92 @@ func advance(p: Vector2, steps: Array[Vector2i], dt: float, speed: float) -> Vec
 		steps.pop_front()
 	return next
 
-func _unhandled_input(event: InputEvent) -> void:
-	if not is_instance_valid(hero):
+func start_game() -> void:
+	playing = true
+	hud.close_login()
+
+func can_step(from: Vector2i, to: Vector2i) -> bool:
+	var d := to - from
+	return valid(to) and (d.x == 0 or d.y == 0 or (valid(from + Vector2i(d.x,0)) and valid(from + Vector2i(0,d.y))))
+
+func move_input(screen: Vector2, dt: float) -> bool:
+	if step_elapsed >= WALK_SECONDS:
+		if screen.length_squared() <= 0.0:
+			return false
+		var d := Vector2i(signi(roundi(screen.x+screen.y)),signi(roundi(-screen.x+screen.y)))
+		var from := cell(pos)
+		if not can_step(from,from+d):
+			return false
+		step_from = Vector2(from)
+		step_to = Vector2(from+d)
+		step_elapsed = 0.0
+		hero.face(iso(step_to)-iso(step_from))
+	step_elapsed = minf(WALK_SECONDS,step_elapsed+dt)
+	pos = step_from.lerp(step_to,step_elapsed/WALK_SECONDS)
+	return true
+
+func collect_loot() -> void:
+	if loot_gold <= 0 or pos.distance_to(enemy_pos)>2.0:
+		message = "Aproxime-se do cadáver para saquear."
 		return
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var click: Vector2 = get_global_mouse_position()
-		if enemy.hp > 0 and click.distance_to(enemy.position-Vector2(0,24)) < 36:
-			target = true
-			walk_to(cell(enemy_pos))
+	gold += loot_gold
+	message = "Loot recolhido: +%d ouro" % loot_gold
+	loot_gold = 0
+
+func use_potion() -> void:
+	if potions <= 0 or hero.hp >= hero.max_hp:
+		return
+	potions -= 1
+	hero.hp = mini(hero.max_hp,hero.hp+45)
+	message = "Poção utilizada."
+
+func interact() -> void:
+	if loot_gold > 0 and pos.distance_to(enemy_pos)<=2.0:
+		collect_loot()
+	elif pos.distance_to(Vector2(23,39))<=2.5:
+		if kills >= 3 and not quest_claimed:
+			quest_claimed = true
+			gold += 100
+			xp += 100
+			message = "Contrato concluído: +100 ouro e XP"
+		elif gold >= 12:
+			gold -= 12
+			potions += 1
+			message = "Mercador: poção comprada por 12 ouro."
 		else:
-			target = false
-			walk_to(cell(uniso(click)))
+			message = "Mercador: poções por 12 ouro."
+	else:
+		message = "Aproxime-se do mercador ou do loot."
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not playing or not is_instance_valid(hero):
+		return
+	if event is InputEventMouseButton and event.pressed:
+		match event.button_index:
+			MOUSE_BUTTON_WHEEL_UP:
+				cam.zoom = Vector2.ONE * minf(1.7,cam.zoom.x+.1)
+			MOUSE_BUTTON_WHEEL_DOWN:
+				cam.zoom = Vector2.ONE * maxf(.8,cam.zoom.x-.1)
+			MOUSE_BUTTON_LEFT:
+				var click: Vector2 = get_global_mouse_position()
+				if click.distance_to(enemy.position-Vector2(0,24)) < 36:
+					if enemy.hp > 0:
+						target = true
+						message = "Alvo selecionado."
+					else:
+						collect_loot()
+				else:
+					target = false
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.physical_keycode:
 			KEY_SPACE:
-				target = true
-				if enemy.hp > 0 and pos.distance_to(enemy_pos)>1.5:
-					walk_to(cell(enemy_pos))
+				attack_requested = true
+			KEY_F:
+				interact()
+			KEY_J:
+				use_potion()
+			KEY_I:
+				hud.toggle_bag()
 			KEY_E:
 				toggle_equipment()
 			KEY_G:
@@ -185,39 +268,35 @@ func damage_enemy() -> void:
 	message = "Golpe certeiro · 20 de dano"
 	if enemy.hp == 0:
 		kills += 1
-		gold += 25
-		respawn = 9.0
+		loot_gold = 25
+		xp += 50
+		if xp >= level*150:
+			xp -= level*150
+			level += 1
+		respawn = 35.0
 		target = false
 		route.clear()
 		enemy.state = "die"
 		enemy.age = 0
-		message = "Goblin derrotado · +25 ouro"
+		message = "Goblin derrotado · saque disponível"
 
 func _physics_process(dt: float) -> void:
-	if not is_instance_valid(hero):
+	if not playing or not is_instance_valid(hero):
 		return
 	attack_time = maxf(0,attack_time-dt)
 	enemy_attack = maxf(0,enemy_attack-dt)
 	var screen := Vector2(float(Input.is_physical_key_pressed(KEY_D))-float(Input.is_physical_key_pressed(KEY_A)),float(Input.is_physical_key_pressed(KEY_S))-float(Input.is_physical_key_pressed(KEY_W)))
-	var before: Vector2 = pos
-	if screen.length_squared()>0 and attack_time<=0:
-		route.clear()
-		target = false
-		var move := Vector2(screen.x+screen.y,-screen.x+screen.y).normalized()*STEP*dt
-		var next: Vector2 = pos+move
-		if valid(cell(next)) and valid(cell(Vector2(next.x,pos.y))) and valid(cell(Vector2(pos.x,next.y))):
-			pos = next
-	elif attack_time<=0:
-		pos = advance(pos,route,dt,STEP)
-	if enemy.hp>0 and target and pos.distance_to(enemy_pos)<=1.5:
-		route.clear()
-		hero.face(iso(enemy_pos)-iso(pos))
-		if attack_time<=0:
+	var moving := move_input(screen,dt)
+	if attack_requested:
+		attack_requested = false
+		if enemy.hp > 0 and pos.distance_to(enemy_pos)<=1.5 and attack_time<=0:
+			target = true
+			hero.face(iso(enemy_pos)-iso(pos))
 			attack_time=0.52
 			damage_enemy()
-	elif pos.distance_to(before)>0.001:
-		hero.face(iso(pos)-iso(before))
-	hero.animate("swing" if attack_time>0 else ("run" if pos.distance_to(before)>0.001 else "stance"),dt)
+		elif enemy.hp > 0:
+			message = "Aproxime-se do inimigo."
+	hero.animate("swing" if attack_time>0 else ("run" if moving else "stance"),dt)
 	hero.position=iso(pos)
 	if enemy.hp>0:
 		var old: Vector2 = enemy_pos
@@ -244,12 +323,16 @@ func _physics_process(dt: float) -> void:
 		respawn-=dt
 		if respawn<=0:
 			enemy.hp=enemy.max_hp
+			loot_gold=0
 			enemy_pos=Vector2(HUNT)
 			enemy.state="stance"
 	enemy.position=iso(enemy_pos)
 	if hero.hp<=0:
 		hero.hp=hero.max_hp
 		pos=Vector2(START)
+		step_from=pos
+		step_to=pos
+		step_elapsed=WALK_SECONDS
 		route.clear()
 		target=false
 		enemy_pos=Vector2(HUNT)
@@ -267,7 +350,13 @@ func smoke() -> void:
 	damage_enemy()
 	damage_enemy()
 	damage_enemy()
-	assert(enemy.hp==0 and gold==previous+25 and kills==1)
+	assert(enemy.hp==0 and gold==previous and loot_gold==25 and kills==1)
+	pos=enemy_pos
+	collect_loot()
+	assert(gold==previous+25 and loot_gold==0)
+	pos=Vector2(START)
+	assert(can_step(START,START))
+	assert(not can_step(START,Vector2i(-1,-1)))
 	toggle_equipment()
 	assert(not hero.equipment)
 	toggle_gender()
