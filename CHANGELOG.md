@@ -52,3 +52,9 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - 16.0.7: arco, varinha, cajado e espada de treino, armas de alcance 5.25, mana por ataque mágico, bônus de afinidade de 15% e cura aprimorada do druida; migração de armas gratuitas uma vez por save.
 - 16.0.8: painel lateral em formato de paperdoll, arraste de equipamentos comuns, ícones de armas e atributos da vocação, entrada offline sem formulário de conta.
 - Limitações: arte procedural iluminada ainda experimental; não é um atlas artístico final. Sem autenticação, multiplayer, loja ou skins pagas. Testes pendentes.
+
+## 16.1 — Criaturas e bestiário
+- Lobos, javalis e ursos com sprites originais articulados, direção e animação de ataque/corrida, tamanhos distintos.
+- Seis novas criaturas no mundo, atributos e recompensas próprias.
+- Guardião e Rei Sepultado maiores, humanoides com renderizador iluminado; bestiário com progresso, vida, nível e XP após descoberta.
+- Arte ainda experimental, sem alteração no mapa-base ou login; testes pendentes.
