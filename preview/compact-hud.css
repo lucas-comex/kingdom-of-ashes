@@ -84,3 +84,5 @@ body>header{background:linear-gradient(#24211b,#12120f);border-bottom:1px solid 
 [data-kind=frontiers],[data-kind=factions]{width:min(355px,94%)}[data-kind=frontiers] button,[data-kind=factions] button{width:100%;margin-top:4px}
 
 [data-kind=dungeons]{width:min(355px,94%)}[data-kind=dungeons] .expCard button{width:100%;margin-top:4px}
+
+[data-kind=mounts]{width:min(350px,94%)}[data-kind=mounts] .expCard button{width:100%;margin-top:5px}
