@@ -19,13 +19,15 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
   for(const mode of ['normal','safe','preview','eco','level100']){
    const page=await browser.newPage({viewport:{width:1280,height:800}});
    const errors=[];
-   page.on('pageerror',err=>errors.push(err.stack||err.message));
+   page.on('pageerror',err=>{errors.push(err.stack||err.message);console.error(mode,'PAGE ERROR',err.stack||err.message)});
    page.on('console',msg=>{if(msg.type()==='error')console.error(mode,msg.text())});
    await page.route('https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js',route=>route.fulfill({path:require.resolve('phaser/dist/phaser.min.js'),contentType:'application/javascript'}));
    await page.goto('http://127.0.0.1:'+server.address().port+(mode==='preview'||mode==='eco'||mode==='level100'?'/preview/index.html?test=1'+(mode==='eco'?'&eco=1':mode==='level100'?'&leveltest=100':''):'/?'+(mode==='safe'?'safe=1':'test=1')),{waitUntil:'load'});
-   await page.waitForFunction(()=>typeof window.koaSave==='function',{timeout:60000});
+   await page.waitForFunction(()=>typeof window.koaSave==='function',null,{timeout:60000});
    await page.locator('#start').click();
-   await page.waitForFunction(()=>window.koaStats?.worldSize===80,{timeout:20000});
+   const expectedWorldSize=['preview','eco','level100'].includes(mode)?160:80;
+    await page.waitForFunction(size=>window.koaStats?.worldSize===size,expectedWorldSize,{timeout:20000});
+    assert.equal(await page.evaluate(()=>window.koaStats.worldSize),expectedWorldSize);
    if(mode==='level100'){
     assert.deepEqual(await page.evaluate(()=>({level:window.koaStats.level,hp:window.koaStats.maxHP,mana:window.koaStats.maxMana,xp:window.koaStats.xpNeeded,speed:window.koaStats.speed})),{level:100,hp:1585,mana:1090,xp:114000,speed:12.4});
     assert.equal(await page.evaluate(()=>window.koaSave()),false);
