@@ -31,6 +31,9 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
    if(expectedWorldSize===160){
      const art=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],tile=window.KOAArt.tile('plaza',3),rgba=tile.getContext('2d').getImageData(0,0,64,32).data;let painted=0;for(let i=3;i<rgba.length;i+=4)if(rgba[i])painted++;return {version:window.koaPerf.artVersion,painted,artTextures:w.textures.getTextureKeys().filter(k=>k.startsWith('art-')).length,local:w.sceneryActive.size,total:w.trees.length}});
      assert.equal(art.version,'15.8');assert.ok(art.painted>800&&art.painted<1500,'isometric tile has a real painted diamond');assert.ok(art.artTextures>0,'new artwork active');assert.ok(art.local<art.total/4,'local scenery remains bounded');console.log('landscape artwork PASS',art);
+     const arch=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],keys=w.textures.getTextureKeys(),samples=['house','tavern','temple','barracks','keep'].map(k=>{const c=window.KOAArchitecture.building(k),d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0;for(let i=3;i<d.length;i+=4)if(d[i])n++;return n});return {version:window.koaPerf.architectureVersion,types:keys.filter(k=>k.startsWith('arch-building-')).length,samples}});
+     assert.equal(arch.version,'15.9');assert.ok(arch.types>=5);assert.ok(arch.samples.every(n=>n>20000&&n<136800),'building artwork must be nonempty and retain transparency');console.log('architecture PASS',arch);
+
     }
     if(mode==='level100'||mode==='level1000'){
     assert.deepEqual(await page.evaluate(()=>({level:window.koaStats.level,hp:window.koaStats.maxHP,mana:window.koaStats.maxMana,xp:window.koaStats.xpNeeded,speed:window.koaStats.speed})),mode==='level1000'?{level:1000,hp:15085,mana:10090,xp:10140000,speed:102.4}:{level:100,hp:1585,mana:1090,xp:114000,speed:12.4});
@@ -89,7 +92,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
     // Route through the tavern door, walk out and verify local item persistence.
     await page.evaluate(()=>window.koaTravel(13,13));
     await page.waitForFunction(()=>window.koaStats?.interior===0,null,{timeout:20000});
-    assert.equal(await page.evaluate(()=>window.koaStats.interiorName),'Taverna do Corvo');
+    assert.equal(await page.evaluate(()=>window.koaStats.interiorName),'Taverna do Corvo');assert.ok(await page.evaluate(()=>window.koaGame.scene.getScenes(true)[0].textures.exists('arch-room-floor-tavern')));
     assert.equal(await page.evaluate(()=>window.koaStats.nearby.length),0);
     await page.waitForTimeout(600);
     await page.keyboard.down('s');
