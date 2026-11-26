@@ -59,6 +59,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
    if(mode==='preview'){
      const improved=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],old={hp:w.hp,potions:w.potions,food:w.food,meat:w.meat};w.hp=w.maxHP();w.potions=2;const full=window.koaUse('potions')===false&&w.potions===2;w.hp=w.maxHP()-50;const heal=window.koaUse('potions')===true&&w.potions===1&&w.hp===w.maxHP()-5;w.food=100;w.meat=2;const food=window.koaUse('meat')===false&&w.meat===2;Object.assign(w,old);return {full,heal,food,questCount:window.KOAExpansion.quests.length,vocations:new Set(window.KOACombat18.abilities.map(a=>a.vocation)).size}});
      assert.deepEqual(improved,{full:true,heal:true,food:true,questCount:26,vocations:4});console.log('22.3 system regression PASS',improved);
+     const respawn=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0];return [{},{sewer:true},{crypt:true},{elite:true},{dungeonBoss:true}].map(e=>w.respawnDelay(e))});assert.deepEqual(respawn,[35,45,75,90,180]);
    }
    const expectedWorldSize=['preview','eco','level100','level1000'].includes(mode)?192:80;
     await page.waitForFunction(size=>window.koaStats?.worldSize===size,expectedWorldSize,{timeout:20000});
