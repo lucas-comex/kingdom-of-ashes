@@ -25,7 +25,8 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
    await page.goto('http://127.0.0.1:'+server.address().port+(mode==='preview'||mode==='eco'||mode==='level100'||mode==='level1000'?'/preview/index.html?test=1'+(mode==='eco'?'&eco=1':mode==='level100'?'&leveltest=100':mode==='level1000'?'&leveltest=1000':''):'/?'+(mode==='safe'?'safe=1':'test=1')),{waitUntil:'load'});
    await page.waitForFunction(()=>typeof window.koaSave==='function',null,{timeout:60000});
    if(mode==='preview'){
-     await page.locator('#registerTab').click();
+     assert.equal(await page.locator('#registerTab').isVisible(),false);
+     await page.locator('#openCreator').click();
      assert.equal(await page.locator('#creatorPanel').isVisible(),true);
      assert.equal(await page.locator('#accountPanel input[type=password]').isDisabled(),true);
      await page.locator('#appearanceGender').selectOption('female');
