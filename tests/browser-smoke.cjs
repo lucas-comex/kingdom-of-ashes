@@ -16,13 +16,13 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
  let browser;
  try{
   browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
-  for(const mode of ['normal','safe']){
+  for(const mode of ['normal','safe','preview']){
    const page=await browser.newPage({viewport:{width:1280,height:800}});
    const errors=[];
    page.on('pageerror',err=>errors.push(err.stack||err.message));
    page.on('console',msg=>{if(msg.type()==='error')console.error(mode,msg.text())});
    await page.route('https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js',route=>route.fulfill({path:require.resolve('phaser/dist/phaser.min.js'),contentType:'application/javascript'}));
-   await page.goto('http://127.0.0.1:'+server.address().port+'/?'+(mode==='safe'?'safe=1':'test=1'),{waitUntil:'load'});
+   await page.goto('http://127.0.0.1:'+server.address().port+(mode==='preview'?'/preview/index.html?test=1':'/?'+(mode==='safe'?'safe=1':'test=1')),{waitUntil:'load'});
    await page.waitForFunction(()=>typeof window.koaSave==='function',{timeout:60000});
    await page.locator('#start').click();
    await page.waitForFunction(()=>window.koaStats?.worldSize===80,{timeout:20000});
@@ -37,6 +37,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
    await page.locator('#tools [data-panel=skills]').click();
    await page.locator('[data-kind=skills] .skillrow').first().waitFor();
    assert.equal(await page.evaluate(()=>window.koaSave()),true);
+   if(mode==='preview'){await page.locator('#tools [data-panel=hotkeys]').click();await page.locator('[data-hotkey="0"]').selectOption('I');await page.locator('[data-hotkey="0"]').evaluate(el=>el.blur());await page.keyboard.press('1');await page.locator('[data-kind=bag] .slot').first().waitFor();assert.equal(await page.evaluate(()=>window.KOA15.direction(1,-1)),'northeast');assert.ok(await page.locator('#quickSlots button').count()===9);assert.ok(await page.evaluate(()=>localStorage.getItem('koa-preview-save-v1')&&!localStorage.getItem('koa-save-v1')));}
    await page.screenshot({path:'artifacts/'+mode+'.png'});
    assert.deepEqual(errors,[],mode+': browser runtime errors');
    console.log(mode,'PASS',start,end);
