@@ -5,6 +5,10 @@ const STEP: float = 2.65
 const WALK_SECONDS: float = 1.0 / STEP
 const START = Vector2i(24,38)
 const HUNT = Vector2i(32,38)
+const CAPITAL_START = Vector2i(24,32)
+const CAPITAL_GATE = Vector2i(8,32)
+const CAPITAL_MERCHANT = Vector2(26,32)
+const OUTPOST_GATE = Vector2i(18,39)
 var map: Dictionary
 var grid := AStarGrid2D.new()
 var ordered := Node2D.new()
@@ -12,7 +16,13 @@ var hero: Actor
 var enemy: Actor
 var hud: HUD
 var cam := Camera2D.new()
-var pos := Vector2(START)
+var pos := Vector2(CAPITAL_START)
+var area: String = "capital"
+var background: Sprite2D
+var static_objects: Array[Sprite2D] = []
+var hud_clock: float = 0.0
+var cull_clock: float = 0.0
+var has_gear: bool = false
 var enemy_pos := Vector2(HUNT)
 var route: Array[Vector2i] = []
 var enemy_route: Array[Vector2i] = []
@@ -26,8 +36,8 @@ var gold: int = 0
 var kills: int = 0
 var message: String = "WASD • Espaço para atacar • F para saquear"
 var playing: bool = false
-var step_from := Vector2(START)
-var step_to := Vector2(START)
+var step_from := Vector2(CAPITAL_START)
+var step_to := Vector2(CAPITAL_START)
 var step_elapsed: float = WALK_SECONDS
 var step_duration: float = WALK_SECONDS
 var urban_count: int = 0
@@ -37,7 +47,7 @@ var attack_requested: bool = false
 var loot_gold: int = 0
 var xp: int = 0
 var level: int = 1
-var potions: int = 3
+var potions: int = 0
 var quest_claimed: bool = false
 var tex: Dictionary = {}
 
@@ -58,19 +68,71 @@ func image(path: String) -> Texture2D:
 	return tex[path]
 
 func _ready() -> void:
-	map = read_json("res://assets/imported/map.json")
-	if map.is_empty():
-		push_error("Arquivos gráficos não importados. Baixe a versão validada pelo GitHub Actions.")
-		get_tree().quit(2)
-		return
-	var background := Sprite2D.new()
-	background.texture = image("res://assets/imported/ground.webp")
+	ordered.y_sort_enabled = true
+	add_child(ordered)
+	background = Sprite2D.new()
 	background.centered = false
 	background.z_index = -5
 	add_child(background)
-	ordered.y_sort_enabled = true
-	add_child(ordered)
-	var atlas: Texture2D = image("res://assets/imported/objects.webp")
+	hero = Actor.new()
+	hero.frames = read_json("res://assets/hero_frames.json")
+	for key in hero.frames:
+		if str(key).begins_with("male-") or str(key).begins_with("female-"):
+			hero.textures[key] = image("res://assets/classic/"+str(key)+".webp")
+	ordered.add_child(hero)
+	hero.position = iso(pos)
+	hero.scale = Vector2(.82,.82)
+	hero.equipment = false
+	enemy = Actor.new()
+	enemy.kind = "goblin"
+	enemy.frames = read_json("res://assets/imported/goblin.json")
+	enemy.textures["goblin"] = image("res://assets/imported/goblin.webp")
+	enemy.actor_label = "Goblin saqueador"
+	enemy.max_hp = 60
+	enemy.hp = 60
+	ordered.add_child(enemy)
+	enemy.position = iso(enemy_pos)
+	load_area("capital")
+	cam.position = hero.position + Vector2(0,-28)
+	cam.position_smoothing_enabled = true
+	cam.position_smoothing_speed = 12.0
+	add_child(cam)
+	cam.make_current()
+	hud = HUD.new()
+	add_child(hud)
+	hud.build(self)
+	hud.set_area("res://assets/capital/minimap.webp")
+	if "--smoke" in OS.get_cmdline_user_args() or "--capture" in OS.get_cmdline_user_args():
+		start_game()
+	if "--smoke" in OS.get_cmdline_user_args():
+		call_deferred("smoke")
+	elif "--capture" in OS.get_cmdline_user_args():
+		call_deferred("capture")
+
+func merchant_cell() -> Vector2:
+	return CAPITAL_MERCHANT if area=="capital" else Vector2(23,39)
+
+func area_title() -> String:
+	return "CAPITAL DO REINO" if area=="capital" else "FRONTEIRA DE ASHES"
+
+func load_area(next_area: String) -> void:
+	area = next_area
+	for node in static_objects:
+		node.queue_free()
+	static_objects.clear()
+	for resident in residents:
+		resident["actor"].queue_free()
+	residents.clear()
+	urban_count = 0
+	urban_lots.clear()
+	var folder: String = "res://assets/capital" if area=="capital" else "res://assets/imported"
+	map = read_json(folder+"/map.json")
+	if map.is_empty():
+		push_error("Mapa ausente: "+folder)
+		get_tree().quit(2)
+		return
+	background.texture = image(folder+"/ground.webp")
+	var atlas: Texture2D = image(folder+"/objects.webp")
 	for obj in map.objects:
 		var spr := Sprite2D.new()
 		spr.texture = atlas
@@ -81,32 +143,19 @@ func _ready() -> void:
 		spr.offset = -Vector2(obj[6],obj[7])
 		spr.position = iso(Vector2(obj[0],obj[1]))
 		ordered.add_child(spr)
+		static_objects.append(spr)
 	grid.region = Rect2i(0,0,64,64)
 	grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
 	grid.update()
 	for y in range(64):
 		for x in range(64):
 			grid.set_point_solid(Vector2i(x,y), int(map.walk[y][x]) != 1)
-	build_urban_extension()
-	hero = Actor.new()
-	hero.frames = read_json("res://assets/hero_frames.json")
-	for key in hero.frames:
-		if str(key).begins_with("male-") or str(key).begins_with("female-"):
-			hero.textures[key] = image("res://assets/classic/"+str(key)+".webp")
-	ordered.add_child(hero)
-	hero.position = iso(pos)
-	hero.scale = Vector2(.88,.88)
-	enemy = Actor.new()
-	enemy.kind = "goblin"
-	enemy.frames = read_json("res://assets/imported/goblin.json")
-	enemy.textures["goblin"] = image("res://assets/imported/goblin.webp")
-	enemy.actor_label = "Goblin saqueador"
-	enemy.max_hp = 60
-	enemy.hp = 60
-	ordered.add_child(enemy)
-	enemy.position = iso(enemy_pos)
+
+	if area=="outpost":
+		build_urban_extension()
 	var npcs: Dictionary = read_json("res://assets/npc_frames.json")
-	for info in [["knight","Guarda de Ashes",Vector2i(24,35)],["wandering_trader","Mercador",Vector2i(23,39)],["peasant_man1","Ferreiro",Vector2i(25,40)],["peasant_woman1","Moradora",Vector2i(20,39)],["knight","Sentinela do portão",Vector2i(24,40)],["peasant_man1","Bram, carpinteiro",Vector2i(26,41)],["peasant_woman1","Elara, herbalista",Vector2i(27,43)],["knight","Capitão Roderic",Vector2i(30,42)],["peasant_man1","Oren, padeiro",Vector2i(35,43)],["wandering_trader","Merek, viajante",Vector2i(41,43)],["peasant_woman1","Irmã Helena",Vector2i(45,44)],["peasant_man1","Tomas, lenhador",Vector2i(18,45)],["knight","Vigia do leste",Vector2i(46,48)]]:
+	var list: Array = [["knight","Guarda Real",Vector2i(22,32)],["wandering_trader","Mercador",Vector2i(26,32)],["peasant_man1","Ferreiro",Vector2i(27,32)],["peasant_woman1","Moradora",Vector2i(28,32)],["knight","Sentinela do portão",Vector2i(8,32)],["peasant_man1","Bram, carpinteiro",Vector2i(20,32)],["peasant_woman1","Elara, herbalista",Vector2i(29,22)],["knight","Capitão Roderic",Vector2i(30,44)],["peasant_man1","Oren, padeiro",Vector2i(34,42)],["wandering_trader","Merek, viajante",Vector2i(37,24)],["peasant_woman1","Irmã Helena",Vector2i(44,30)]] if area=="capital" else [["knight","Guarda de Ashes",Vector2i(24,35)],["wandering_trader","Mercador",Vector2i(23,39)],["peasant_man1","Ferreiro",Vector2i(25,40)],["peasant_woman1","Moradora",Vector2i(20,39)],["knight","Sentinela do portão",Vector2i(24,40)],["peasant_man1","Bram, carpinteiro",Vector2i(26,41)],["peasant_woman1","Elara, herbalista",Vector2i(27,43)],["knight","Capitão Roderic",Vector2i(30,42)],["peasant_man1","Oren, padeiro",Vector2i(35,43)],["wandering_trader","Merek, viajante",Vector2i(41,43)],["peasant_woman1","Irmã Helena",Vector2i(45,44)],["peasant_man1","Tomas, lenhador",Vector2i(18,45)],["knight","Vigia do leste",Vector2i(46,48)]]
+	for info in list:
 		var person: Actor = Actor.new()
 		person.kind = "npc"
 		person.npc_name = info[0]
@@ -116,20 +165,33 @@ func _ready() -> void:
 		person.position = iso(Vector2(info[2]))
 		ordered.add_child(person)
 		residents.append({"actor":person,"name":info[1],"cell":Vector2(info[2])})
-	cam.position = hero.position + Vector2(0,-28)
-	cam.position_smoothing_enabled = true
-	cam.position_smoothing_speed = 12.0
-	add_child(cam)
-	cam.make_current()
-	hud = HUD.new()
-	add_child(hud)
-	hud.build(self)
-	if "--smoke" in OS.get_cmdline_user_args() or "--capture" in OS.get_cmdline_user_args():
-		start_game()
-	if "--smoke" in OS.get_cmdline_user_args():
-		call_deferred("smoke")
-	elif "--capture" in OS.get_cmdline_user_args():
-		call_deferred("capture")
+
+	pos = Vector2(CAPITAL_START if area=="capital" else START)
+	step_from=pos
+	step_to=pos
+	step_duration=WALK_SECONDS
+	step_elapsed=WALK_SECONDS
+	hero.position=iso(pos)
+	enemy.visible=area=="outpost"
+	target=false
+	enemy_route.clear()
+	attack_requested=false
+	attack_time=0.0
+	if area=="outpost":
+		enemy.position=iso(enemy_pos)
+	if is_instance_valid(hud):
+		hud.set_area(folder+"/minimap.webp")
+	cam.position=hero.position+Vector2(0,-28)
+	cam.reset_smoothing()
+	cull_objects()
+	message="Bem-vindo à capital. F no portão oeste leva à região de caça." if area=="capital" else "F junto ao posto de viagem retorna à capital."
+
+func cull_objects() -> void:
+	var center: Vector2 = hero.position
+	var extent: Vector2 = get_viewport_rect().size/(2.0*cam.zoom.x)+Vector2(240,320)
+	for spr in static_objects:
+		var delta: Vector2 = (spr.position-center).abs()
+		spr.visible=delta.x<=extent.x and delta.y<=extent.y
 
 func build_urban_extension() -> void:
 	var atlas := image("res://assets/kingdom-art-v1.webp")
@@ -168,6 +230,7 @@ func build_urban_extension() -> void:
 		var ratio: float = float(lot[2])/art.get_width()
 		spr.scale = Vector2.ONE*ratio
 		ordered.add_child(spr)
+		static_objects.append(spr)
 		for point in footprint:
 			grid.set_point_solid(point,true)
 		urban_count += 1
@@ -237,7 +300,7 @@ func move_input(screen: Vector2, dt: float) -> bool:
 	return true
 
 func collect_loot() -> void:
-	if loot_gold <= 0 or pos.distance_to(enemy_pos)>2.0:
+	if area!="outpost" or loot_gold <= 0 or pos.distance_to(enemy_pos)>2.0:
 		message = "Aproxime-se do cadáver para saquear."
 		return
 	gold += loot_gold
@@ -252,9 +315,15 @@ func use_potion() -> void:
 	message = "Poção utilizada."
 
 func interact() -> void:
-	if loot_gold > 0 and pos.distance_to(enemy_pos)<=2.0:
+	if area=="capital" and pos.distance_to(Vector2(CAPITAL_GATE))<=2.0:
+		load_area("outpost")
+		return
+	if area=="outpost" and pos.distance_to(Vector2(OUTPOST_GATE))<=2.0:
+		load_area("capital")
+		return
+	if area=="outpost" and loot_gold > 0 and pos.distance_to(enemy_pos)<=2.0:
 		collect_loot()
-	elif pos.distance_to(Vector2(23,39))<=2.5:
+	elif pos.distance_to(merchant_cell())<=2.5:
 		if kills >= 3 and not quest_claimed:
 			quest_claimed = true
 			gold += 100
@@ -278,7 +347,7 @@ func interact() -> void:
 			message = str(best["name"]) + ": " + str(lines.get(best["name"],"Bem-vindo ao posto de Ashes."))
 
 func buy_potion() -> void:
-	if not playing or pos.distance_to(Vector2(23,39)) > 2.5:
+	if not playing or pos.distance_to(merchant_cell()) > 2.5:
 		message = "Aproxime-se do mercador."
 		return
 	if gold < 12:
@@ -300,7 +369,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				cam.zoom = Vector2.ONE * maxf(.8,cam.zoom.x-.1)
 			MOUSE_BUTTON_LEFT:
 				var click: Vector2 = get_global_mouse_position()
-				if click.distance_to(enemy.position-Vector2(0,24)) < 36:
+				if area=="outpost" and click.distance_to(enemy.position-Vector2(0,24)) < 36:
 					if enemy.hp > 0:
 						target = true
 						message = "Alvo selecionado."
@@ -323,7 +392,19 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_G:
 				toggle_gender()
 
+func buy_gear() -> void:
+	if not playing or pos.distance_to(merchant_cell())>2.5 or has_gear or gold<60:
+		message="Conjunto de aço: 60 ouro."
+		return
+	gold-=60
+	has_gear=true
+	message="Conjunto adquirido. E para equipar."
+	hud.update_view()
+
 func toggle_equipment() -> void:
+	if not has_gear:
+		message="Você ainda não possui equipamento."
+		return
 	hero.equipment = not hero.equipment
 	hero.queue_redraw()
 	message = "Equipamento de aço" if hero.equipment else "Traje inicial"
@@ -333,8 +414,9 @@ func toggle_gender() -> void:
 	hero.queue_redraw()
 
 func damage_enemy() -> void:
-	enemy.hp = maxi(0,enemy.hp-20)
-	message = "Golpe certeiro · 20 de dano"
+	var damage: int = 20 if hero.equipment else 10
+	enemy.hp = maxi(0,enemy.hp-damage)
+	message = "Golpe certeiro · %d de dano" % damage
 	if enemy.hp == 0:
 		kills += 1
 		loot_gold = 25
@@ -358,18 +440,20 @@ func _physics_process(dt: float) -> void:
 	var moving := move_input(screen,dt)
 	if attack_requested:
 		attack_requested = false
-		if enemy.hp > 0 and pos.distance_to(enemy_pos)<=1.5 and attack_time<=0:
+		if area=="outpost" and enemy.hp > 0 and pos.distance_to(enemy_pos)<=1.5 and attack_time<=0:
 			target = true
 			hero.face(iso(enemy_pos)-iso(pos))
 			attack_time=0.52
 			damage_enemy()
-		elif enemy.hp > 0:
+		elif area=="outpost" and enemy.hp > 0:
 			message = "Aproxime-se do inimigo."
 	hero.animate("swing" if attack_time>0 else ("run" if moving else "stance"),dt)
 	if moving and attack_time<=0:
 		hero.sync_walk(step_elapsed/step_duration)
 	hero.position=iso(pos)
-	if enemy.hp>0:
+	if area=="capital":
+		pass
+	elif enemy.hp>0:
 		var old: Vector2 = enemy_pos
 		var distance: float = pos.distance_to(enemy_pos)
 		if distance<7 and distance>1.4:
@@ -400,7 +484,8 @@ func _physics_process(dt: float) -> void:
 	enemy.position=iso(enemy_pos)
 	if hero.hp<=0:
 		hero.hp=hero.max_hp
-		pos=Vector2(START)
+		load_area("capital")
+		pos=Vector2(CAPITAL_START)
 		step_from=pos
 		step_to=pos
 		step_duration=WALK_SECONDS
@@ -408,11 +493,23 @@ func _physics_process(dt: float) -> void:
 		route.clear()
 		target=false
 		enemy_pos=Vector2(HUNT)
-		message="Você voltou ao posto de Ashes"
+		message="Você voltou à capital."
 	cam.position=hero.position+Vector2(0,-28)
-	hud.update_view()
+	hud_clock+=dt
+	cull_clock+=dt
+	if hud_clock>=.10:
+		hud_clock=0.0
+		hud.update_view()
+	if cull_clock>=.20:
+		cull_clock=0.0
+		cull_objects()
 
 func smoke() -> void:
+	assert(area=="capital" and valid(CAPITAL_START) and not hero.equipment and not has_gear and potions==0 and gold==0)
+	assert(path(CAPITAL_START,CAPITAL_GATE).size()>0)
+	assert(path(CAPITAL_START,Vector2i(CAPITAL_MERCHANT)).size()>0)
+	assert(not enemy.visible)
+	load_area("outpost")
 	assert(valid(START) and valid(HUNT))
 	assert(path(START,HUNT).size()>0)
 	assert(map.objects.size()>300)
@@ -427,9 +524,8 @@ func smoke() -> void:
 	assert(hero.textures.size()==28)
 	assert(enemy.textures.has("goblin"))
 	var previous: int=gold
-	damage_enemy()
-	damage_enemy()
-	damage_enemy()
+	for n in range(6):
+		damage_enemy()
 	assert(enemy.hp==0 and gold==previous and loot_gold==25 and kills==1)
 	pos=enemy_pos
 	collect_loot()
@@ -437,6 +533,11 @@ func smoke() -> void:
 	pos=Vector2(START)
 	assert(can_step(START,START))
 	assert(not can_step(START,Vector2i(-1,-1)))
+	toggle_equipment()
+	assert(not hero.equipment)
+	has_gear=true
+	toggle_equipment()
+	assert(hero.equipment)
 	toggle_equipment()
 	assert(not hero.equipment)
 	toggle_gender()

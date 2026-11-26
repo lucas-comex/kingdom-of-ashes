@@ -11,6 +11,11 @@ var bag: PanelContainer
 var bag_text: Label
 var shop: PanelContainer
 var shop_info: Label
+var region_label: Label
+var fps_label: Label
+var quest_panel: PanelContainer
+var quest_text: Label
+var status_cache: String = ""
 
 func panel_style() -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
@@ -41,7 +46,7 @@ func build(w) -> void:
 	root.add_child(top)
 	top.position=Vector2(16,16)
 	top.add_theme_stylebox_override("panel",panel_style())
-	var title:=make_label("KINGDOM OF ASHES  /  REBORN 0.4",18)
+	var title:=make_label("KINGDOM OF ASHES  /  REBORN 0.5",18)
 	top.add_child(title)
 	var side:=PanelContainer.new()
 	root.add_child(side)
@@ -52,7 +57,10 @@ func build(w) -> void:
 	side.add_theme_stylebox_override("panel",panel_style())
 	var col:=VBoxContainer.new()
 	side.add_child(col)
-	col.add_child(make_label("POSTO DE ASHES",16))
+	region_label=make_label("CAPITAL DO REINO",14)
+	col.add_child(region_label)
+	fps_label=make_label("",11)
+	col.add_child(fps_label)
 	mini=TextureRect.new()
 	mini.texture=world.image("res://assets/imported/minimap.webp")
 	mini.custom_minimum_size=Vector2(165,100)
@@ -68,19 +76,19 @@ func build(w) -> void:
 	details=make_label("Equipamento",14)
 	col.add_child(details)
 	var e:=Button.new()
-	e.text="Equipar / retirar [E]"
+	e.text="Equipar [E]"
 	e.pressed.connect(world.toggle_equipment)
 	col.add_child(e)
 	var g:=Button.new()
-	g.text="Personagem [G]"
-	g.pressed.connect(world.toggle_gender)
+	g.text="Mochila [I]"
+	g.pressed.connect(toggle_bag)
 	col.add_child(g)
 	var bottom:=PanelContainer.new()
 	root.add_child(bottom)
 	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	bottom.offset_left=16
 	bottom.offset_right=-16
-	bottom.offset_top=-111
+	bottom.offset_top=-100
 	bottom.offset_bottom=-16
 	bottom.add_theme_stylebox_override("panel",panel_style())
 	var box:=VBoxContainer.new()
@@ -92,7 +100,7 @@ func build(w) -> void:
 	life=ProgressBar.new()
 	life.max_value=100
 	life.show_percentage=false
-	life.custom_minimum_size=Vector2(200,20)
+	life.custom_minimum_size=Vector2(130,18)
 	var fill:=StyleBoxFlat.new()
 	fill.bg_color=Color("#9d302b")
 	fill.set_corner_radius_all(3)
@@ -102,8 +110,11 @@ func build(w) -> void:
 	spacer.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	line.add_child(spacer)
 	status=make_label("",14)
-	line.add_child(status)
-	var help:=make_label("WASD: mover  •  Espaço: atacar  •  F: interagir  •  I: mochila  •  J: poção  •  Scroll: zoom",13)
+	status.clip_text=true
+	status.custom_minimum_size=Vector2(220,20)
+	status.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	box.add_child(status)
+	var help:=make_label("WASD • Espaço: atacar • F: interagir • I: mochila • J: poção • Scroll: zoom",12)
 	box.add_child(help)
 	bag=PanelContainer.new()
 	root.add_child(bag)
@@ -127,6 +138,10 @@ func build(w) -> void:
 	buy.text="Comprar poção"
 	buy.pressed.connect(world.buy_potion)
 	stock.add_child(buy)
+	var armor:=Button.new()
+	armor.text="Conjunto de aço · 60 ouro"
+	armor.pressed.connect(world.buy_gear)
+	stock.add_child(armor)
 	var close:=Button.new()
 	close.text="Fechar"
 	close.pressed.connect(func(): shop.hide())
@@ -134,6 +149,11 @@ func build(w) -> void:
 	shop.hide()
 	build_login(root)
 	update_view()
+
+func set_area(path: String) -> void:
+	mini.texture=world.image(path)
+	region_label.text=world.area_title()
+	shop.hide()
 
 func open_shop() -> void:
 	shop.show()
@@ -196,12 +216,13 @@ func update_view() -> void:
 		return
 	life.value=world.hero.hp
 	if is_instance_valid(shop):
-		if world.pos.distance_to(Vector2(23,39))>2.5:
+		if world.pos.distance_to(world.merchant_cell())>2.5:
 			shop.hide()
 		shop_info.text="Poção de cura · 12 ouro | Saldo: %d" % world.gold
 	label.text="VIDA  %d/100    "%world.hero.hp
 	status.text="%s | Nv. %d · Ouro: %d · Abates: %d"%[world.message,world.level,world.gold,world.kills]
 	if is_instance_valid(bag_text):
-		bag_text.text="MOCHILA\nOuro: %d\nPoções: %d [J]\nXP: %d\nContrato: %d/3" % [world.gold,world.potions,world.xp,mini(world.kills,3)]
-	details.text="Aço equipado" if world.hero.equipment else "Traje de tecido"
+		bag_text.text="MOCHILA\nOuro: %d\nPoções: %d [J]\nXP: %d\nContrato: %d/3\nEquipamento: %s" % [world.gold,world.potions,world.xp,mini(world.kills,3),"Aço" if world.has_gear else "Nenhum"]
+	details.text="Aço equipado" if world.hero.equipment else ("Aço na mochila" if world.has_gear else "Sem equipamentos")
+	fps_label.text="%d FPS" % Engine.get_frames_per_second()
 	dot.position=Vector2(world.pos.x/64.0*mini.size.x,world.pos.y/64.0*mini.size.y)

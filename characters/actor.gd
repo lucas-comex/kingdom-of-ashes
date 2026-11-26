@@ -19,20 +19,23 @@ func face(delta: Vector2) -> void:
 		return
 	var angle: float = atan2(delta.y, delta.x)
 	var octant: int = posmod(roundi(angle / (PI / 4.0)), 8)
-	direction = [5, 6, 7, 0, 1, 2, 3, 4][octant]
-	queue_redraw()
+	var next_direction: int = [5, 6, 7, 0, 1, 2, 3, 4][octant]
+	if direction!=next_direction:
+		direction=next_direction
+		queue_redraw()
 
 func animate(next_state: String, dt: float) -> void:
-	if state != next_state:
+	var changed: bool = state != next_state
+	if changed:
 		state = next_state
 		age = 0.0
 	age += dt
 	var n: int = 4 if state == "run" or state == "swing" else (3 if state == "die" else 1)
 	var cadence: float = .095 if state == "run" else .12
 	var new_frame: int = mini(n - 1, int(age / cadence)) if state == "swing" or state == "die" else int(age / cadence) % n
-	if new_frame != frame:
+	if new_frame != frame or changed:
 		frame = new_frame
-	queue_redraw()
+		queue_redraw()
 
 func sync_walk(progress: float) -> void:
 	var next_frame: int = clampi(int(progress*4.0),0,3)
