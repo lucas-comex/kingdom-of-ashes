@@ -20,6 +20,7 @@ function texture(scene,kind,dir,frame,state='stance',variant=0){if(state==='stan
 const sizes={lobo:82,boar:90,bear:112,bandido:96,esqueleto:96,cavaleiro:110,'guardião':128,rei:140};
 // Separate raster families for dungeon creatures and undead, with cached directional frames.
 function dungeonCreature(scene,kind,dir,frame,state='stance',variant=0){
+ const raster=window.KOAMonsterRaster?.texture(scene,kind,dir,frame,state);if(raster)return raster;
  if(state==='stance')frame=0;frame=Math.abs(frame|0)%4;const key=['koa-dungeon',kind,dir,frame,state,variant].join('-');if(scene.textures.exists(key))return key;
  const cv=document.createElement('canvas');cv.width=cv.height=96;const c=cv.getContext('2d'),a=Math.max(0,directions.indexOf(dir))*Math.PI/4,co=Math.cos(a),si=Math.sin(a),walk=state==='run'?Math.sin(frame*Math.PI/2):0,attack=state==='attack'?Math.sin((frame+1)*Math.PI/5):0;
  const P=(x,y,z)=>[48+x*co+z*si,78-y*.88+(z*co-x*si)*.40,z*co-x*si];
