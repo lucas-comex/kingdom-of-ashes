@@ -138,3 +138,8 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - Posições de cabeça, mãos, tronco e pés revisadas sobre os 16 quadros originais. Ajuste ao pixel opaco do corpo, espelhamento e transformação lateral mantidos.
 - Armas/escudos giram em torno do cabo/empunhadura do recorte, com ordem de profundidade por vista; mão sobre o cabo quando em primeiro plano. Armadura, calças e botas limitadas pela máscara alfa do corpo; botas separadas por pé. Capacete acompanha a cabeça. Sem alteração em inventário, atributos ou saves.
 - Teste de contato dos pontos de ancoragem, máscara de roupas e presença da arma nas 16 poses, além das regressões. Quatro vistas aproximadas, não oito desenhos independentes; poses de combate ainda transformações da arte existente. Validação visual e desempenho no dispositivo pendentes.
+
+## 19.4 — Polimento visual geral
+- Impactos de combate com partículas limitadas (12 eventos, 240 ms), destaque de crítico e cor elemental, desligados em qualidade reduzida. Indicador de alvo na área de jogo e HUD, barras maiores de chefes e aviso de preparação de ataque.
+- Menu compacto opcional e persistente, atalhos essenciais sempre visíveis, botões de saque acessíveis por teclado, contraste e feedback visual de equipamentos. Corrige minimapa dos esgotos e atualização de mapa por masmorra.
+- Preserva atributos, combate, saves e conteúdo. Testes de menu e ciclo dos impactos; inspeção visual e FPS no dispositivo ainda pendentes. Nenhuma infraestrutura online adicionada.
