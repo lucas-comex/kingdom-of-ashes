@@ -1,11 +1,11 @@
-#menu{position:fixed;inset:0;z-index:99;overflow:auto;text-align:center;padding:clamp(20px,4vw,56px) 16px 32px;background:linear-gradient(90deg,#090b0eb0 0%,#090b0e20 48%,#08090c90 100%),url('assets/kingdom-gates.svg') center center/cover fixed!important;color:#e4d7bc;scrollbar-gutter:stable}
+#menu{position:fixed;inset:0;z-index:99;overflow:auto;text-align:center;padding:clamp(20px,4vw,56px) 16px 32px;background:#101310!important;color:#e4d7bc;scrollbar-gutter:stable}
 #menu .koa-landing{min-height:calc(100vh - 110px);display:flex;align-items:center;justify-content:center;gap:clamp(24px,7vw,110px);max-width:1320px;margin:auto}
 #menu .koa-brand{flex:1 1 470px;text-shadow:0 3px 8px #000,0 0 30px #000;max-width:720px}
 #menu .koa-brand h1{font-family:Georgia,'Times New Roman',serif;font-variant:small-caps;font-size:clamp(40px,6.3vw,96px);font-weight:700;line-height:.98;letter-spacing:.025em;text-transform:none;color:#f2d9a0;text-shadow:0 2px 0 #784e27,0 4px 0 #231a15,0 6px 16px #000}
 #menu .koa-brand h1 em{font-size:.5em;font-weight:400;color:#d7be89;display:block;letter-spacing:.11em;margin:8px 0}
 .koa-emblem{font-size:50px;color:#bda172}.koa-kicker{color:#c8a773;font:10px/1.6 system-ui;letter-spacing:.23em}.koa-rule{height:1px;background:linear-gradient(90deg,transparent,#cfa76a,transparent);margin:28px auto;max-width:380px}
 #menu .koa-brand p{font-size:clamp(15px,2vw,24px);font-style:italic;color:#e7d8b8}.koa-menu-card{flex:0 1 460px;width:min(100%,480px);padding:24px;background:linear-gradient(155deg,#201c17f5,#0d1115f5);border:1px solid #9c8053;box-shadow:0 0 0 5px #151313b0,0 24px 80px #000d;position:relative}
-.koa-menu-card:before,.koa-menu-card:after{content:'◆';position:absolute;top:-9px;color:#c4a56b;font-size:14px}.koa-menu-card:before{left:-6px}.koa-menu-card:after{right:-6px}
+.koa-menu-card:before,.koa-menu-card:after{content:none;position:absolute;top:-9px;color:#c4a56b;font-size:14px}.koa-menu-card:before{left:-6px}.koa-menu-card:after{right:-6px}
 .koa-tabs{display:flex;gap:6px;margin:18px 0}.koa-tabs button{flex:1;background:#131316;border-color:#5c4d38;padding:12px}.koa-tabs button[aria-pressed=true]{background:linear-gradient(#68432b,#35231d);border-color:#d4b47d;color:#ffebc5}
 #menu label{display:block;text-align:left;font:11px system-ui;letter-spacing:.04em;color:#e6d5b4;margin:8px 0}
 #menu input:not([type=checkbox]):not([type=color]),#menu select{display:block;width:100%;margin:5px 0 0;padding:10px;background:#0d1014;color:#eee0c8;border:1px solid #605440;font:13px system-ui;border-radius:2px}
@@ -17,3 +17,32 @@
 .koa-character-display{background:radial-gradient(ellipse at 50% 45%,#514a38,#151b20 70%);border:1px solid #5f513a;min-width:0;padding:6px}.koa-character-display canvas{width:100%;height:auto;display:block;image-rendering:auto}.koa-character-display button{font-size:10px;width:100%}.koa-colors{display:flex;gap:6px;flex-wrap:wrap}.koa-colors label{font-size:9px;flex:1;min-width:55px}.koa-colors input{width:100%;display:block;height:25px;padding:1px;background:#121315;border:1px solid #716148}#menu .koa-check{font-size:10px;display:flex;gap:5px;align-items:center;letter-spacing:0}.koa-check input{accent-color:#ba965b}#bootWarning{color:#f1b29b;font-size:12px}
 @media(max-width:780px){#menu .koa-landing{flex-direction:column;gap:20px;justify-content:flex-start;min-height:0}#menu .koa-brand{flex:0 0 auto;width:100%}#menu .koa-brand h1{font-size:52px}#menu .koa-brand h1 em{display:inline;margin:0}.koa-emblem{font-size:27px}.koa-rule{margin:10px auto}.koa-menu-card{flex:0 0 auto;padding:17px}.koa-brand p{margin:8px 0}}
 @media(max-width:380px){.koa-creator{grid-template-columns:1fr}.koa-character-display{width:120px;margin:auto}}
+
+/* 22.1 — photograph-based login screen, no changes to the gameplay canvas. */
+#menu{isolation:isolate;display:flex;flex-direction:column;min-height:100dvh;padding:32px clamp(20px,5vw,90px) 18px}
+#menu .koa-backdrop{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;object-position:40% 46%;filter:brightness(.83) saturate(.72) sepia(.12);z-index:-2;pointer-events:none}
+#menu .koa-backdrop-shade{position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,rgba(12,14,12,.08) 0%,rgba(12,14,12,.12) 43%,rgba(12,14,12,.65) 72%,#101310ee 100%),linear-gradient(0deg,#0b0e0dd9 0%,#0b0e0d00 48%,#12141016 100%)}
+#menu .koa-landing{width:100%;max-width:1500px;flex:1;min-height:calc(100dvh - 104px);gap:clamp(26px,8vw,130px);justify-content:space-between;align-items:center}
+#menu .koa-brand{align-self:flex-end;max-width:690px;text-align:left;padding:0 0 clamp(18px,7vh,84px);flex:1 1 56%}
+#menu .koa-brand h1{font-size:clamp(52px,6.5vw,108px);line-height:.97;letter-spacing:.015em;text-shadow:0 3px 0 #47341e,0 6px 24px #000,0 0 55px #000b;color:#f4dfb0}
+#menu .koa-brand h1 em{display:inline;font-style:italic;font-size:.47em;letter-spacing:0;margin:0 3px}
+#menu .koa-rule{margin:22px 0 18px;background:linear-gradient(90deg,#e5c18a,transparent);max-width:360px}
+#menu .koa-brand .koa-kicker{letter-spacing:.3em;color:#f4dcb1;font-weight:700}
+#menu .koa-brand p{font-size:clamp(16px,1.6vw,22px);margin:0;color:#f2e5cc}
+#menu .koa-menu-card{flex:0 1 410px;max-width:440px;padding:32px clamp(22px,3vw,40px);text-align:left;background:linear-gradient(145deg,#21231ef5,#121612fa);border:1px solid #b29a68;box-shadow:0 0 0 4px #171a16aa,0 18px 65px #000b}
+#menu .koa-menu-card .koa-kicker{font-size:10px;letter-spacing:.22em}
+#menu .koa-access-title{font-size:32px;line-height:1.15;margin:14px 0 6px;color:#f3dfb6}
+#menu .koa-intro{color:#bdbaab;font-size:14px;margin:0 0 24px}
+#menu #accountPanel label{font-size:13px;letter-spacing:.02em;margin:16px 0}
+#menu #accountPanel input{height:46px;background:#0f130f;color:#f1e4cb;border-color:#77684e;padding:12px;font-size:14px}
+#menu #accountPanel input:focus{outline:2px solid #d0ae74;outline-offset:1px}
+#menu #accountNote{font-size:11px;line-height:1.5;color:#bdb7a7;margin:12px 0 16px}
+#menu #start{font-size:14px;letter-spacing:.15em;margin:14px 0 9px;padding:16px;background:linear-gradient(#aa7941,#704520)!important;border:1px solid #efcd8b;box-shadow:inset 0 1px 0 #f9dca36b,0 4px 12px #0006;color:#fff1d5}
+#menu #start:hover{background:linear-gradient(#c29250,#8d5e2c)!important}
+#menu .koa-register{display:block;width:100%;padding:12px;background:transparent;border:1px solid #927c55;color:#e8d1a5;font:600 13px system-ui;margin:0 0 16px}
+#menu #openCreator{background:#242820;border-color:#74654b;letter-spacing:.06em;font-size:11px;padding:10px}
+#menu .koa-art-import{font:11px/1.6 system-ui;color:#b7b09d;margin-top:16px}
+#menu .koa-menu-links{justify-content:flex-start;border-top:1px solid #78694b55;padding-top:12px}
+#menu .koa-landing-footer{position:relative;text-align:center;font-size:10px;line-height:1.8;color:#d7c7ab;letter-spacing:.08em;margin:12px auto 0}
+#menu .koa-landing-footer a{color:#e4d5b8;text-decoration:underline}
+@media(max-width:780px){#menu{padding:18px 16px}#menu .koa-landing{display:flex;flex-direction:column;gap:24px;min-height:auto;justify-content:flex-start}#menu .koa-brand{align-self:center;flex:auto;text-align:center;padding:22px 0 8px;max-width:none}#menu .koa-brand h1{font-size:clamp(42px,10vw,70px)}#menu .koa-rule{margin:12px auto}#menu .koa-menu-card{width:100%;flex:auto;padding:22px;max-width:440px}#menu .koa-backdrop{object-position:32% center}#menu .koa-backdrop-shade{background:linear-gradient(0deg,#0b0e0de0,#11150f26 100%)}}

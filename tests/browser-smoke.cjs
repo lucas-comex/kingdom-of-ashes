@@ -25,7 +25,15 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
    await page.goto('http://127.0.0.1:'+server.address().port+(mode==='preview'||mode==='eco'||mode==='level100'||mode==='level1000'?'/preview/index.html?test=1'+(mode==='eco'?'&eco=1':mode==='level100'?'&leveltest=100':mode==='level1000'?'&leveltest=1000':''):'/?'+(mode==='safe'?'safe=1':'test=1')),{waitUntil:'load'});
    await page.waitForFunction(()=>typeof window.koaSave==='function',null,{timeout:60000});
    if(mode==='preview'){
-     assert.equal(await page.locator('#registerTab').isVisible(),false);
+     assert.equal(await page.locator('#registerTab').isVisible(),true);
+     assert.equal(await page.locator('#demoLogin').isEditable(),true);
+     assert.equal(await page.locator('#demoPassword').isEditable(),true);
+     assert.equal(await page.locator('#start').isVisible(),true);
+     assert.ok((await page.locator('#kingdomBackdrop').getAttribute('src')).includes('Aerial_view_of_Hohenzollern_Castle'));
+     await page.screenshot({path:'artifacts/landing-22.1.png'});
+     await page.locator('#registerTab').click();
+     assert.match(await page.locator('#accountNote').textContent(),/desenvolvimento/);
+     assert.equal(await page.locator('#creatorPanel').isVisible(),false);
      await page.locator('#openCreator').click();
      assert.equal(await page.locator('#creatorPanel').isVisible(),true);
      assert.equal(await page.evaluate(()=>window.KOASpritePack.source),'built-in','original raster must load automatically from the bundled asset');assert.equal(await page.evaluate(()=>window.KOASpritePack.nativeFrames),8,'eight native-resolution hero frames must be available');
@@ -34,7 +42,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      const anchors=await page.evaluate(()=>{const a=window.KOASpritePack,p=window.KOAAppearance.get(),cv=document.createElement('canvas');cv.width=cv.height=96;let connected=true,clipped=true,visible=true;const frames=[0,1,2,3];for(let row=0;row<4;row++)for(const col of frames){const dir=row%2?'north':'south',profile={...p,gender:row>=2?'female':'male',hair:'short',beard:'none',hideHelmet:false},render=gear=>{a.draw(cv,profile,dir,col,gear,'run');return cv.getContext('2d').getImageData(0,0,96,96).data},base=render(0),clothes=render(1|128|512),armed=render(8),an=a.getAnchors(row,col);for(const q of [an.head,an.left,an.right,...an.feet]){const x=Math.floor(q[0]),y=Math.floor(q[1]);if(base[(y*96+x)*4+3]<50)connected=false}let changed=0;for(let i=0;i<base.length;i+=4){if(base[i+3]===0&&clothes[i+3]>3)clipped=false;if(armed[i]!==base[i]||armed[i+1]!==base[i+1]||armed[i+2]!==base[i+2]||armed[i+3]!==base[i+3])changed++}if(changed<8)visible=false}return {connected,clipped,visible,grips:[0,1,2,3,4].every(i=>a.getGrip(i).every(v=>v>0&&v<1))}});assert.deepEqual(anchors,{connected:true,clipped:true,visible:true,grips:true});
      const pack=await page.evaluate(async()=>{const api=window.KOASpritePack,c=document.createElement('canvas');c.width=384;c.height=512;const x=c.getContext('2d');x.fillStyle='#794b35';x.fillRect(38,10,20,72);x.fillStyle='#8b9cac';x.fillRect(64*5+16,384+8,32,40);await api.loadURL(c.toDataURL(),false);const out=document.createElement('canvas');out.width=out.height=96;const p=window.KOAAppearance.get();api.draw(out,p,'south',0,0,'stance');const before=out.toDataURL();api.draw(out,p,'south',0,2,'stance');const changed=out.toDataURL()!==before;api.clear();const active=api.active;api.useDefault();return {changed,active}});assert.deepEqual(pack,{changed:true,active:false});
      const starter=await page.evaluate(()=>{const cv=document.createElement('canvas');cv.width=cv.height=96;const p=window.KOAAppearance.get();return ['warrior','archer','sorcerer','druid'].map(vocation=>{window.KOAAppearance.paint(cv,{...p,vocation},'south',0,0,'stance');return cv.toDataURL()})});assert.equal(new Set(starter).size,1,'starting clothing must be identical across vocations');
-     assert.equal(await page.locator('#accountPanel input[type=password]').isDisabled(),true);
+     assert.equal(await page.locator('#accountPanel input[type=password]').isDisabled(),false);
      await page.locator('#appearanceGender').selectOption('female');
      await page.locator('#appearanceClass').selectOption('archer');
      await page.locator('#appearanceHair').selectOption('long');

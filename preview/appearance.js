@@ -84,7 +84,8 @@ function texture(scene,dir,frame,gear,action){return textureFor(scene,{...window
 for(const [k,id] of Object.entries(ids)){const el=$(id);if(el.type==='checkbox')el.checked=profile[k];else el.value=profile[k];el.addEventListener('input',()=>{custom=true;redraw()})}
 $('appearanceArmor').addEventListener('input',redraw);$('turnPreview').onclick=()=>{angle=(angle+1)%8;redraw()};
 $('openCreator').onclick=()=>{custom=true;$('creatorPanel').hidden=!$('creatorPanel').hidden;$('openCreator').textContent=$('creatorPanel').hidden?'PERSONALIZAR PERSONAGEM':'RECOLHER PERSONALIZAÇÃO';redraw()};
-$('loginTab').onclick=()=>{$('loginTab').setAttribute('aria-pressed','true');$('registerTab').setAttribute('aria-pressed','false');$('accountNote').textContent='Contas online ainda não estão disponíveis. Nenhuma senha será coletada nesta versão.'};
-$('registerTab').onclick=()=>{$('loginTab').setAttribute('aria-pressed','false');$('registerTab').setAttribute('aria-pressed','true');$('accountNote').textContent='Cadastro online em desenvolvimento. Por enquanto, crie seu personagem e jogue como visitante.';if($('creatorPanel').hidden)$('openCreator').click()};
+$('loginTab').onclick=()=>{$('loginTab').setAttribute('aria-pressed','true');$('registerTab').setAttribute('aria-pressed','false');$('accountNote').textContent='Acesso de visitante: os campos são opcionais e não são enviados nem salvos.'};
+$('registerTab').onclick=()=>{$('loginTab').setAttribute('aria-pressed','false');$('registerTab').setAttribute('aria-pressed','true');$('accountNote').textContent='Criação de contas em desenvolvimento. Clique em Entrar para jogar como visitante; nenhuma senha é necessária.'};
+$('start').addEventListener('click',()=>{for(const id of ['demoLogin','demoPassword']){const field=$(id);if(field)field.value=''}},true);
 window.KOAAppearance={paint,normalize,get:()=>({...profile}),commit,texture,npcTexture,dirs};window.addEventListener('koa-spritepack-changed',redraw);redraw();
 })();
