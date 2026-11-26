@@ -77,6 +77,12 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
     await page.keyboard.up('s');
     assert.equal(await page.evaluate(()=>window.koaSave()),true);
     console.log('interior entry/exit PASS');
+    assert.equal(await page.evaluate(()=>window.koaStats.worldSize),160);
+    const expanded=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0];w.routeTo({x:148,y:148});const end=w.path.at(-1)||w.goal;w.goal=null;w.path=[];return {end,doors:w.houses.filter(h=>!h.disabled&&w.walkable(h.door.x,h.door.y)).length,active:w.sceneryActive.size,total:w.trees.length}});
+    assert.deepEqual(expanded.end,{x:148,y:148});assert.equal(expanded.doors,45);assert.ok(expanded.active<expanded.total/4,'vegetation must be streamed locally');
+    await page.locator('#tools [data-panel=worldmap]').click();await page.locator('[data-kind=worldmap]').getByText('160 × 160',{exact:false}).waitFor();
+    console.log('expanded world and streaming PASS',expanded);
+
 
    }
    if(mode==='eco'){assert.equal(await page.evaluate(()=>window.koaEco),true);assert.equal(await page.evaluate(()=>window.koaPerf.frameLimit),30);assert.equal(await page.evaluate(()=>document.documentElement.dataset.eco),'yes')}
