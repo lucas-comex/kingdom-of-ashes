@@ -4,6 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname,'..');
+async function clickTool(page,id){const btn=page.locator('#tools [data-panel='+id+']');if(!await btn.isVisible()){const group=btn.locator('xpath=ancestor::details[1]');if(await group.count())await group.locator('summary').click()}await btn.click()}
+
 const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg+xml','.css':'text/css','.png':'image/png','.webp':'image/webp'};
 (async()=>{
  const server=http.createServer((req,res)=>{
@@ -53,6 +55,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      assert.notEqual(await page.locator('#appearancePreview').evaluate(c=>c.toDataURL()),preview);
    }
    await page.locator('#start').click();
+   if(mode==='preview'){assert.equal(await page.locator('#tools>button').count(),4);assert.equal(await page.locator('#tools .toolGroup').count(),4);assert.equal(await page.locator('[data-side-view=map]').isVisible(),true);assert.equal(await page.locator('[data-side-view=gear]').isVisible(),false);assert.equal(await page.locator('#tools [data-panel=skills]').isVisible(),false);await page.locator('#tools .toolGroup').first().locator('summary').click();assert.equal(await page.locator('#tools [data-panel=skills]').isVisible(),true);await page.locator('#tools .toolGroup').first().locator('summary').click();const layout=await page.evaluate(()=>{const v=document.getElementById('viewport').getBoundingClientRect(),h=document.getElementById('hud').getBoundingClientRect(),tools=document.getElementById('tools');return {world:v.height,hud:h.height,noHorizontal:tools.scrollWidth<=tools.clientWidth+1}});assert.ok(layout.world>layout.hud*2);assert.ok(layout.noHorizontal);await page.screenshot({path:'artifacts/hud-22.4.png'})}
    if(mode==='preview'){
      const improved=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],old={hp:w.hp,potions:w.potions,food:w.food,meat:w.meat};w.hp=w.maxHP();w.potions=2;const full=window.koaUse('potions')===false&&w.potions===2;w.hp=w.maxHP()-50;const heal=window.koaUse('potions')===true&&w.potions===1&&w.hp===w.maxHP()-5;w.food=100;w.meat=2;const food=window.koaUse('meat')===false&&w.meat===2;Object.assign(w,old);return {full,heal,food,questCount:window.KOAExpansion.quests.length,vocations:new Set(window.KOACombat18.abilities.map(a=>a.vocation)).size}});
      assert.deepEqual(improved,{full:true,heal:true,food:true,questCount:26,vocations:4});console.log('22.3 system regression PASS',improved);
@@ -142,9 +145,9 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
        return results;
      });
      for(const item of gearResult)for(const k of ['removed','equipped','owned','stored','bitOn','bitOff','pixelsChanged','restored'])assert.equal(item[k],true,item.slot+' '+k);
-     await page.locator('#sideGear [data-equip="gear:helmet"]').click();
+     await page.locator('[data-side-tab=gear]').click();await page.locator('#sideGear [data-equip="gear:helmet"]').click();
      await page.waitForFunction(()=>window.koaStats.storedGear.helmet===true&&!(window.koaStats.visualGear&2));
-     await page.locator('#tools [data-panel=bag]').click();
+     await clickTool(page,'bag');
      await page.locator('[data-kind=bag] [data-equip="gear:helmet"]').click();
      await page.waitForFunction(()=>!!(window.koaStats.visualGear&2));
      await page.locator('[data-kind=bag] header button').click();
@@ -160,7 +163,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      const dungeonTest=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],a=window.KOADungeons,old={p:{...w.p},level:w.level,dungeons:w.dungeons,gold:w.gold,xp:w.xp,relicBag:w.relicBag.slice(),combatTime:w.combatTime};w.level=20;w.combatTime=0;w.dungeons=a.fresh();const gate=w.dungeonGates[0];w.p={x:gate.x,y:gate.y};const entered=a.transition(w,gate.id),isolation=w.sameArea(w.enemies.find(e=>e.dungeon===gate.id))&&!w.sameArea(w.enemies.find(e=>e.crypt&&!e.dungeon)),walk=w.walkable(202,202),boss=w.enemies.find(e=>e.dungeon===gate.id&&e.dungeonBoss),reward=a.defeat(w,boss),duplicate=a.defeat(w,boss),exit=a.transition(w,null);const distinct=new Set(a.defs.map(d=>d.layout.join(''))).size,reachable=a.defs.every(d=>{const q=[[2,2]],seen=new Set(['2,2']);for(let i=0;i<q.length;i++){const [x,y]=q[i];for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const X=x+dx,Y=y+dy,k=X+','+Y;if(d.layout[Y]?.[X]==='.'&&!seen.has(k)){seen.add(k);q.push([X,Y])}}}return d.mobs.every(([x,y])=>seen.has(x+','+y))});Object.assign(w,old);w.refreshTerrain();w.refreshGround();window.koaSave();return {entered,isolation,walk,reward,duplicate,exit,distinct,reachable}});assert.deepEqual(dungeonTest,{entered:true,isolation:true,walk:true,reward:true,duplicate:false,exit:true,distinct:3,reachable:true});
      const mountTest=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],a=window.KOAMounts,old={p:{...w.p},level:w.level,gold:w.gold,mounts:w.mounts,riding:w.riding,combatTime:w.combatTime};w.p={x:15,y:15};w.level=20;w.gold=1000;w.combatTime=0;w.mounts=a.fresh();w.riding=null;const base=w.moveSpeed(),buy=window.koaMount('buy','pony'),duplicate=window.koaMount('buy','pony'),ride=window.koaMount('ride','pony'),boost=Math.round((w.moveSpeed()/base-1)*100),art=a.texture(w,a.mounts[0],'south',0)!==a.texture(w,a.mounts[0],'east',1);w.combatTime=5;a.tick(w);const blocked=!w.riding&&w.moveSpeed()===base&&!window.koaMount('ride','pony'),owned=a.clean(w.mounts).owned.length;const res={buy,duplicate,ride,boost,art,blocked,owned,gold:w.gold,towns:a.towns.length};Object.assign(w,old);window.koaSave();return res});assert.deepEqual(mountTest,{buy:true,duplicate:false,ride:true,boost:18,art:true,blocked:true,owned:1,gold:820,towns:3});
      const skillTest=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],a=window.KOACombat18,old={level:w.level,mana:w.mana,hp:w.hp,progress:w.combatProgress,cd:w.abilityCD,guard:w.abilityGuard};w.level=12;w.mana=200;w.combatProgress=a.clean({uses:{evasion:10}});w.abilityCD={};const cost=a.snapshot(w).skills.find(x=>x.id==='evasion').cost,wrong=window.koaAbility('fortify'),used=window.koaAbility('evasion'),blocked=window.koaAbility('evasion'),guard=w.abilityGuard,remaining=w.abilityCD.evasion;const res={total:a.abilities.length,cost,wrong,used,blocked,guard,remaining,uses:w.combatProgress.uses.evasion,ice:a.resist('rei','ice')};Object.assign(w,{level:old.level,mana:old.mana,hp:old.hp,combatProgress:old.progress,abilityCD:old.cd,abilityGuard:old.guard});return res});assert.deepEqual(skillTest,{total:12,cost:21,wrong:false,used:true,blocked:false,guard:6,remaining:18,uses:11,ice:-.2});
-     const offensive=await page.evaluate(()=>{const a=window.KOACombat18,old=window.koaLowFX;window.koaLowFX=true;try{const mob={hp:100,kind:'rei',x:5,y:0},w={p:{x:0,y:0},level:12,mana:100,inCrypt:true,inSewer:false,interior:null,relicEquipped:{},cooldown:0,enemies:[mob],vocation:()=> 'archer',weaponKind:()=> 'bow',sameArea:()=>true,clearStrike:()=>true,guardLine:()=>true,isCastle:()=>false};a.init(w);const queued=a.request(w,'frostarrow'),cast=a.take(w),damage=a.strike(w,cast,20);a.tick(w,1);return {queued,damage,mana:w.mana,slow:mob.slowTime,remaining:w.abilityCD.frostarrow,uses:w.combatProgress.uses.frostarrow}}finally{window.koaLowFX=old}});assert.deepEqual(offensive,{queued:true,damage:38,mana:80,slow:4,remaining:8,uses:1});await page.locator('#tools [data-panel=bag]').click();await page.locator('#bagFilter').selectOption('sword');assert.equal(await page.locator('#bagFilter').inputValue(),'sword');await page.locator('#bagFilter').selectOption('all');await page.locator('[data-kind=bag] header button').click();assert.ok(await page.locator('#sideGear img.rasterIcon').count()>0);
+     const offensive=await page.evaluate(()=>{const a=window.KOACombat18,old=window.koaLowFX;window.koaLowFX=true;try{const mob={hp:100,kind:'rei',x:5,y:0},w={p:{x:0,y:0},level:12,mana:100,inCrypt:true,inSewer:false,interior:null,relicEquipped:{},cooldown:0,enemies:[mob],vocation:()=> 'archer',weaponKind:()=> 'bow',sameArea:()=>true,clearStrike:()=>true,guardLine:()=>true,isCastle:()=>false};a.init(w);const queued=a.request(w,'frostarrow'),cast=a.take(w),damage=a.strike(w,cast,20);a.tick(w,1);return {queued,damage,mana:w.mana,slow:mob.slowTime,remaining:w.abilityCD.frostarrow,uses:w.combatProgress.uses.frostarrow}}finally{window.koaLowFX=old}});assert.deepEqual(offensive,{queued:true,damage:38,mana:80,slow:4,remaining:8,uses:1});await clickTool(page,'bag');await page.locator('#bagFilter').selectOption('sword');assert.equal(await page.locator('#bagFilter').inputValue(),'sword');await page.locator('#bagFilter').selectOption('all');await page.locator('[data-kind=bag] header button').click();assert.ok(await page.locator('#sideGear img.rasterIcon').count()>0);
      const expansion=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],old={level:w.level,gold:w.gold,wood:w.wood,herbs:w.herbs,xp:w.xp,hp:w.hp,mana:w.mana,expansion:JSON.parse(JSON.stringify(w.expansion)),bag:w.relicBag.slice()};w.level=12;w.gold=1000;w.wood=30;w.herbs=30;let accepted=window.koaExpansion('accept','q1');window.KOAExpansion.record(w,'kill:lobo',3);let claimed=window.koaExpansion('claim','q1'),duplicate=window.koaExpansion('claim','q1');let crafted=window.koaExpansion('craft','ironHelm'),upgraded=window.koaExpansion('upgrade','ironHelm'),talent=window.koaExpansion('talent','precision'),deposit=window.koaExpansion('deposit','bank',50),withdraw=window.koaExpansion('withdraw','bank',50);const snapshot=window.KOAExpansion.snapshot(w),answer={accepted,claimed,duplicate,crafted,upgraded,talent,deposit,withdraw,quests:snapshot.quests.length,recipes:snapshot.recipes.length};Object.assign(w,{...old,relicBag:old.bag});window.koaSave();return answer});assert.deepEqual(expansion,{accepted:true,claimed:true,duplicate:false,crafted:true,upgraded:true,talent:true,deposit:true,withdraw:true,quests:26,recipes:12});
      const creatures=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],out=[];for(const k of ['lobo','boar','bear']){const e=w.enemies.find(e=>e.kind===k),a=window.KOACreatures.texture(w,k,'south',0,'stance'),b=window.KOACreatures.texture(w,k,'west',1,'run');out.push({kind:k,exists:!!e,size:e.g.displayWidth,framesDiffer:w.textures.get(a).getSourceImage().toDataURL()!==w.textures.get(b).getSourceImage().toDataURL()})}return out});
      assert.ok(creatures.every(e=>e.exists&&e.framesDiffer));assert.ok(creatures[0].size<creatures[1].size&&creatures[1].size<creatures[2].size);
@@ -188,16 +191,16 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
    await page.waitForTimeout(500);
    const end=await page.evaluate(()=>window.koaStats.position);
    assert.notDeepEqual(start,end,mode+': player did not move');
-   await page.locator('#tools [data-panel=bag]').click();
+   await clickTool(page,'bag');
    await page.locator('[data-kind=bag] .slot').first().waitFor();
    await page.locator('[data-kind=bag] header button').click();
-   await page.locator('#tools [data-panel=skills]').click();
+   await clickTool(page,'skills');
    await page.locator('[data-kind=skills] .skillrow').first().waitFor();
    assert.equal(await page.evaluate(()=>window.koaSave()),true);
-   if(mode==='preview'){await page.locator('#tools [data-panel=hotkeys]').click();await page.locator('[data-hotkey="0"]').selectOption('I');await page.locator('[data-hotkey="0"]').evaluate(el=>el.blur());await page.keyboard.press('1');await page.locator('[data-kind=bag] .slot').first().waitFor();assert.equal(await page.evaluate(()=>window.KOA15.direction(1,-1)),'northeast');assert.ok(await page.locator('#quickSlots button').count()===9);assert.ok(await page.evaluate(()=>localStorage.getItem('koa-preview-save-v1')&&!localStorage.getItem('koa-save-v1')));}
+   if(mode==='preview'){await clickTool(page,'hotkeys');await page.locator('[data-hotkey="0"]').selectOption('I');await page.locator('[data-hotkey="0"]').evaluate(el=>el.blur());await page.keyboard.press('1');await page.locator('[data-kind=bag] .slot').first().waitFor();assert.equal(await page.evaluate(()=>window.KOA15.direction(1,-1)),'northeast');assert.ok(await page.locator('#quickSlots button').count()===9);assert.ok(await page.evaluate(()=>localStorage.getItem('koa-preview-save-v1')&&!localStorage.getItem('koa-save-v1')));}
    if(mode==='preview'){
     const bag=page.locator('[data-kind=bag]');
-    if(!(await bag.count()))await page.locator('#tools [data-panel=bag]').click();
+    if(!(await bag.count()))await clickTool(page,'bag');
     await bag.locator('[data-drag-item=meat]').waitFor();
     const before=await page.evaluate(()=>window.koaStats.meat);
     if(before>1){
@@ -205,12 +208,12 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      await page.locator('#dropQuantity').fill('1');
      await page.locator('#dropConfirm').click();
      await page.waitForFunction(n=>window.koaStats.meat===n-1,before);
-     await page.locator('#tools [data-panel=ground]').click();
+     await clickTool(page,'ground');
      assert.ok(await page.evaluate(()=>Number(document.querySelector('[data-kind=ground]').style.zIndex)>Number(document.querySelector('[data-kind=bag]').style.zIndex)),'new ground window must be above bag');
      await page.locator('[data-kind=ground] [data-pickup]').first().click();
      await page.waitForFunction(n=>window.koaStats.meat===n,before);
     }
-    await page.locator('#tools [data-panel=character]').click();
+    await clickTool(page,'character');
     await page.locator('[data-kind=character] .groundRow').first().waitFor();
     await page.evaluate(()=>window.KOAInventory.move('meat','gold'));
     assert.equal(await page.evaluate(()=>window.KOAInventory.order[0]),'meat');
@@ -228,7 +231,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
     assert.equal(await page.evaluate(()=>window.koaStats.worldSize),192);
     const expanded=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0];w.routeTo({x:148,y:148});const end=w.path.at(-1)||w.goal;w.goal=null;w.path=[];return {end,doors:w.houses.filter(h=>!h.disabled&&w.walkable(h.door.x,h.door.y)).length,active:w.sceneryActive.size,total:w.trees.length}});
     assert.deepEqual(expanded.end,{x:148,y:148});assert.equal(expanded.doors,57,'all 45 original and 12 new building entrances must be accessible');assert.ok(expanded.active<expanded.total/4,'vegetation must be streamed locally');
-    await page.locator('#tools [data-panel=worldmap]').click();await page.locator('[data-kind=worldmap]').getByText('192 × 192',{exact:false}).waitFor();
+    await clickTool(page,'worldmap');await page.locator('[data-kind=worldmap]').getByText('192 × 192',{exact:false}).waitFor();
     const north=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],a=window.KOAMounts;return {towns:window.koaStats.towns.length,reachable:a.towns.map(([x,y])=>{w.routeTo({x,y});const end=w.path.at(-1)||w.goal;w.goal=null;w.path=[];return end&&end.x===x&&end.y===y}),doors:w.houses.slice(-12).every(h=>w.walkable(h.door.x,h.door.y)),chests:a.chests.length}});assert.deepEqual(north,{towns:13,reachable:[true,true,true],doors:true,chests:6});console.log('expanded world and streaming PASS',expanded,north);
 
 
