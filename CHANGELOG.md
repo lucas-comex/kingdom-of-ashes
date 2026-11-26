@@ -116,3 +116,8 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - 12 habilidades exclusivas (3 por vocação), nível mínimo, arma exigida, mana, recarga e maestria persistente por uso. Ataques usam a mesma rotina de dano, morte, XP e loot existente; proteção temporária, cura e lentidão, efeitos leves.
 - Resistências/vulnerabilidades físicas, de fogo, gelo e natureza por espécie, aplicadas às habilidades ofensivas. O Rei Sepultado possui três fases de onda de cinzas; Guardião acelera ataques com pouca vida.
 - Oito novos equipamentos de recompensa/loot, sem alterar os itens anteriores. Painel de magias e barra compacta clicável. Arte reutiliza atlas atual; não há multiplayer, conta ou monetização. Testes de regressão e de recarga/maestria; balanceamento e FPS reais pendentes.
+
+## 19.0 — Fronteiras do Reino (primeiro pacote)
+- 12 pontos de interesse com decoração, descoberta, XP e rotas; 24 inimigos adicionais, dos quais 12 elites; 8 novos baús com ouro crescente. Tudo dentro do mapa existente de 160×160.
+- 12 novos contratos de campanha, totalizando 26; três facções com comissões repetíveis, dificuldade crescente e reputação; três profissões com cinco graus e recompensas únicas por grau.
+- Novos painéis Exploração e Facções; estado persistente e migração de baús já abertos. Sem mudança de conta ou multiplayer. Novos continentes, masmorras independentes e montarias ainda não implementados. Testes pendentes.
