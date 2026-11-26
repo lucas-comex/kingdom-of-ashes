@@ -1,9 +1,10 @@
 /* 19.2 — mounts: ownership is persistent, riding is session state. */
 (()=>{'use strict';
 const towns=[[174,38,'Passo de Gelo'],[62,174,'Porto de Sal Negro'],[174,174,'Fortaleza de Nortenhal']];
-const mounts=[{id:'pony',name:'Pônei das Estradas',level:5,price:180,boost:.18,coat:'#79634d',mane:'#3d352c'},{id:'horse',name:'Cavalo Castanho',level:10,price:450,boost:.28,coat:'#865138',mane:'#322b26'},{id:'warhorse',name:'Corcel da Fronteira',level:18,price:950,boost:.38,coat:'#555b58',mane:'#292e2b'}];
+const mounts=[{id:'pony',name:'Pônei das Estradas',level:5,price:180,boost:.18,coat:'#79634d',mane:'#3d352c'},{id:'horse',name:'Cavalo Castanho',level:1,price:0,boost:.65,coat:'#865138',mane:'#322b26'},{id:'warhorse',name:'Corcel da Fronteira',level:18,price:950,boost:.38,coat:'#555b58',mane:'#292e2b'}];
 const stables=[[15,15],...towns.map(([x,y])=>[x,y])];
 const get=id=>mounts.find(m=>m.id===id),fresh=()=>({owned:[]}),clean=raw=>({owned:[...new Set(Array.isArray(raw?.owned)?raw.owned.filter(id=>get(id)):[])]});
+function withGift(state){if(!state.owned.includes('horse'))state.owned.push('horse');return state}
 const outdoors=w=>w.interior===null&&!w.inCrypt&&!w.inSewer;
 const allowed=w=>outdoors(w)&&w.combatTime<=0&&w.hp>0;
 const near=w=>outdoors(w)&&stables.some(([x,y])=>Math.hypot(w.p.x-x,w.p.y-y)<5);
@@ -29,5 +30,5 @@ function texture(w,m,dir,frame){const key=['mount19',m.id,dir,frame].join('-');i
 function render(w,a,b,moving){const m=get(w.riding);if(!w.mountSprite)return 0;if(!m||!allowed(w)){w.mountSprite.setVisible(false);return 0}const frame=moving?Math.floor(w.phase*2)%4:0,key=texture(w,m,w.facing,frame);if(w.mountSprite.texture.key!==key)w.mountSprite.setTexture(key);w.mountSprite.setVisible(true).setPosition(a,b).setDepth(b+.1).setDisplaySize(128,128);return 37+(moving?Math.sin(frame*Math.PI/2)*1.2:0)}
 const enemies=[[166,15,300,'lobo'],[178,24,350,'bear'],[185,49,400,'bandido'],[165,73,340,'boar'],[181,96,420,'bear'],[168,118,450,'bandido'],[185,139,460,'lobo'],[165,157,490,'bear'],[184,183,560,'bandido'],[140,178,440,'lobo'],[107,183,400,'boar'],[75,185,380,'bandido'],[48,164,330,'bear'],[20,179,310,'lobo'],[6,167,300,'boar'],[90,169,400,'bandido'],[179,66,420,'lobo'],[158,185,500,'bear']].map(([x,y,hp,kind])=>({x,y,hp,kind}));
 const chests=[[170,20],[184,55],[166,113],[184,181],[85,184],[20,170]].map(([x,y],i)=>({x,y,bonus:190+i*35}));
-window.KOAMounts={towns,mounts,stables,fresh,clean,command,boost,tick,snapshot,render,texture,enemies,chests};
+window.KOAMounts={towns,mounts,stables,fresh,clean,withGift,command,boost,tick,snapshot,render,texture,enemies,chests};
 })();

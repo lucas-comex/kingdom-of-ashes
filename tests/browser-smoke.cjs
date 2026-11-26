@@ -80,7 +80,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
 
     }
     if(mode==='level100'||mode==='level1000'){
-    assert.deepEqual(await page.evaluate(()=>({level:window.koaStats.level,hp:window.koaStats.maxHP,mana:window.koaStats.maxMana,xp:window.koaStats.xpNeeded,speed:window.koaStats.speed})),mode==='level1000'?{level:1000,hp:15085,mana:10090,xp:10140000,speed:3.5}:{level:100,hp:1585,mana:1090,xp:114000,speed:3.5});
+    assert.deepEqual(await page.evaluate(()=>({level:window.koaStats.level,hp:window.koaStats.maxHP,mana:window.koaStats.maxMana,xp:window.koaStats.xpNeeded,speed:window.koaStats.speed})),mode==='level1000'?{level:1000,hp:15085,mana:10090,xp:10140000,speed:2.52}:{level:100,hp:1585,mana:1090,xp:114000,speed:2.52});
     assert.equal(await page.evaluate(()=>window.koaSave()),false);
     assert.equal(await page.evaluate(()=>localStorage.getItem('koa-preview-save-v1')),null);
     await page.screenshot({path:'artifacts/'+mode+'.png'});
@@ -97,11 +97,12 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
        const after={...w.p};w.update(0,80);const released={...w.p};
        w.level=old;w.p=p;return {speeds,distance:Math.hypot(after.x-p.x,after.y-p.y),drift:Math.hypot(released.x-after.x,released.y-after.y)};
      });
-     assert.deepEqual(movement.speeds.map(s=>Math.round(s*10000)/10000),[2.5,2.6375,3.5,3.5,3.5]);
-     assert.ok(movement.distance<=.281,'a single movement tick must remain bounded');
+     assert.deepEqual(movement.speeds.map(s=>Math.round(s*10000)/10000),[1.8,1.899,2.52,2.52,2.52]);
+     assert.ok(movement.distance<=.203,'a single movement tick must remain bounded');
      assert.equal(movement.drift,0,'release must stop manual movement');
      if(process.env.KOA_REQUIRE_HD==='1')assert.equal(await page.evaluate(()=>window.KOAFlareHeroScale),1,'HD source assets must be active');
      console.log('bounded player movement PASS',movement);
+     const travelFix=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],old={riding:w.riding,combatTime:w.combatTime};w.combatTime=0;w.riding=null;const base=w.moveSpeed(),gift=w.mounts.owned.includes('horse'),ride=window.koaMount('ride','horse'),boost=Math.round((w.moveSpeed()/base-1)*100),roads=w.houses.filter(h=>!w.roadHouseClear(h.x,h.y,h.type==='keep'?2:1)).map(h=>h.id);window.koaMount('dismount');Object.assign(w,old);return {gift,ride,boost,roads}});assert.deepEqual(travelFix,{gift:true,ride:true,boost:65,roads:[]});
      const sprites=await page.evaluate(()=>{
        const scene=window.koaGame.scene.getScenes(true)[0], flare=window.KOAFlare;
        const dirs=Object.keys(flare.dirs), states={stance:4,run:8,swing:4,block:2,hit:2,shoot:4,cast:4,die:6};
