@@ -8,6 +8,7 @@ var state: String = "stance"
 var frame: int = 0
 var age: float = 0.0
 var equipment: bool = true
+var gear: Dictionary = {}
 var kind: String = "hero"
 var npc_name: String = ""
 var actor_label: String = ""
@@ -61,18 +62,18 @@ func _draw() -> void:
 	if kind == "hero":
 		if textures.is_empty():
 			return
-		if equipment and direction <= 2:
+		if gear.has("sword") and direction <= 2:
 			layer("blade")
-		if equipment and direction >= 4 and direction <= 6:
+		if gear.has("shield") and direction >= 4 and direction <= 6:
 			layer("shield")
-		layer("boots" if equipment else "feet")
-		layer("legs" if equipment else "pants")
-		layer("armor" if equipment else "shirt")
-		layer("helmet" if equipment else "head")
-		if equipment and direction > 2:
+		layer("boots" if gear.has("boots") else "feet")
+		layer("legs" if gear.has("legs") else "pants")
+		layer("armor" if gear.has("armor") else "shirt")
+		layer("helmet" if gear.has("helmet") else "head")
+		if gear.has("sword") and direction > 2:
 			layer("blade")
 		layer("hands")
-		if equipment and (direction < 4 or direction == 7):
+		if gear.has("shield") and (direction < 4 or direction == 7):
 			layer("shield")
 	elif kind == "goblin":
 		if not textures.has("goblin"):

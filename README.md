@@ -13,3 +13,5 @@ GitHub Actions imports, smoke-tests, captures a screenshot and exports the Web b
 0.5.1: explicit eight-way mapping, arrows and keypad 7/9/1/3 as backup; no diagonal wall clipping, safe fallback, leftover physics time retained. Smoke tests all eight directions on both maps.
 
 0.6: mouse left click/hold movement, click selects target, QWER aimed skills (press then left click, Esc/right cancels), Space selected basic attack, right click interaction, K equipment, NPC roaming, passive shield defense. No doors/stairs/sewers beyond existing zone gates yet.
+
+0.7: six individually purchasable/equippable slots with original item atlas icons, passive attack and defense, explicit shop, local persistent progress with manual and 20-second autosave. Saves are local to browser; position and login are not persisted. Doors and interiors remain pending.

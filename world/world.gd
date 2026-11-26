@@ -23,6 +23,19 @@ var static_objects: Array[Sprite2D] = []
 var hud_clock: float = 0.0
 var cull_clock: float = 0.0
 var has_gear: bool = false
+const ITEMS = {
+	"sword":{"name":"Espada de ferro","price":20,"attack":10,"defense":0,"icon":Rect2(1053,516,198,248)},
+	"shield":{"name":"Escudo de ferro","price":18,"attack":0,"defense":3,"icon":Rect2(40,772,175,248)},
+	"armor":{"name":"Armadura de aço","price":30,"attack":0,"defense":2,"icon":Rect2(266,772,235,248)},
+	"helmet":{"name":"Elmo de ferro","price":16,"attack":0,"defense":1,"icon":Rect2(549,772,181,248)},
+	"boots":{"name":"Botas reforçadas","price":14,"attack":0,"defense":1,"icon":Rect2(788,775,215,242)},
+	"legs":{"name":"Grevas de aço","price":18,"attack":0,"defense":1,"icon":Rect2(266,772,235,248)}
+}
+var owned_gear: Dictionary = {}
+var equipped_gear: Dictionary = {}
+var save_clock: float = 0.0
+var save_disabled: bool = false
+const SAVE_PATH = "user://koa-reborn-07.json"
 var mouse_walk: bool = false
 var repath_clock: float = 0.0
 var aim: int = -1
@@ -98,6 +111,7 @@ func _ready() -> void:
 	hero.position = iso(pos)
 	hero.scale = Vector2(.82,.82)
 	hero.equipment = false
+	hero.gear=equipped_gear
 	enemy = Actor.new()
 	enemy.kind = "goblin"
 	enemy.frames = read_json("res://assets/imported/goblin.json")
@@ -475,7 +489,48 @@ func advance(p: Vector2, steps: Array[Vector2i], dt: float, speed: float) -> Vec
 
 func start_game() -> void:
 	playing = true
+	save_disabled="--smoke" in OS.get_cmdline_user_args() or "--capture" in OS.get_cmdline_user_args()
+	if not save_disabled:
+		restore_progress()
 	hud.close_login()
+	hud.update_view()
+
+func save_progress() -> bool:
+	if save_disabled or not playing:
+		return false
+	var file := FileAccess.open(SAVE_PATH,FileAccess.WRITE)
+	if file==null:
+		return false
+	file.store_string(JSON.stringify({"version":1,"gold":gold,"xp":xp,"level":level,"kills":kills,"potions":potions,"quest_claimed":quest_claimed,"owned":owned_gear,"equipped":equipped_gear}))
+	file.close()
+	return true
+
+func restore_progress() -> void:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return
+	var data := read_json(SAVE_PATH)
+	if int(data.get("version",0))!=1:
+		return
+	gold=clampi(int(data.get("gold",0)),0,9999999)
+	xp=clampi(int(data.get("xp",0)),0,9999999)
+	level=clampi(int(data.get("level",1)),1,10000)
+	kills=clampi(int(data.get("kills",0)),0,9999999)
+	potions=clampi(int(data.get("potions",0)),0,999)
+	quest_claimed=data.get("quest_claimed",false)==true
+	var inventory: Variant = data.get("owned",{})
+	var equipped: Variant = data.get("equipped",{})
+	if inventory is Dictionary and equipped is Dictionary:
+		for id in ITEMS:
+			if inventory.get(id,false)==true:
+				owned_gear[id]=true
+				if equipped.get(id,false)==true:
+					equipped_gear[id]=true
+	refresh_equipment()
+	message="Progresso local recuperado. Bem-vindo à capital."
+
+func manual_save() -> void:
+	message="Progresso salvo neste navegador." if save_progress() else "Não foi possível salvar o progresso."
+	hud.update_view()
 
 func can_step(from: Vector2i, to: Vector2i) -> bool:
 	var d := to - from
@@ -540,6 +595,7 @@ func collect_loot() -> void:
 	gold += loot_gold
 	message = "Loot recolhido: +%d ouro" % loot_gold
 	loot_gold = 0
+	save_progress()
 
 func use_potion() -> void:
 	if potions <= 0 or hero.hp >= hero.max_hp:
@@ -547,6 +603,7 @@ func use_potion() -> void:
 	potions -= 1
 	hero.hp = mini(hero.max_hp,hero.hp+45)
 	message = "Poção utilizada."
+	save_progress()
 
 func interact() -> void:
 	if area=="capital" and pos.distance_to(Vector2(CAPITAL_GATE))<=2.0:
@@ -590,6 +647,7 @@ func buy_potion() -> void:
 	gold -= 12
 	potions += 1
 	message = "Poção comprada por 12 ouro."
+	save_progress()
 	hud.update_view()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -670,22 +728,66 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_G:
 				toggle_gender()
 
-func buy_gear() -> void:
-	if not playing or pos.distance_to(merchant_cell())>2.5 or has_gear or gold<60:
-		message="Conjunto de aço: 60 ouro."
-		return
-	gold-=60
-	has_gear=true
-	message="Conjunto adquirido. K para equipar."
+func item_icon(id: String) -> Texture2D:
+	var icon := AtlasTexture.new()
+	icon.atlas=image("res://assets/kingdom-art-v1.webp")
+	icon.region=ITEMS[id]["icon"]
+	icon.filter_clip=true
+	return icon
+
+func attack_value() -> int:
+	var total: int = 10
+	for id in equipped_gear:
+		total+=int(ITEMS[id]["attack"])
+	return total
+
+func defense_value() -> int:
+	var total: int = 0
+	for id in equipped_gear:
+		total+=int(ITEMS[id]["defense"])
+	return total
+
+func refresh_equipment() -> void:
+	has_gear=not owned_gear.is_empty()
+	hero.equipment=not equipped_gear.is_empty()
+	hero.gear=equipped_gear
+	hero.queue_redraw()
+
+func buy_item(id: String) -> bool:
+	if not ITEMS.has(id) or not playing or pos.distance_to(merchant_cell())>2.5:
+		message="Aproxime-se do mercador."
+		return false
+	if owned_gear.has(id):
+		message="Você já possui este equipamento."
+		return false
+	var price: int = ITEMS[id]["price"]
+	if gold<price:
+		message="Ouro insuficiente."
+		return false
+	gold-=price
+	owned_gear[id]=true
+	refresh_equipment()
+	message=str(ITEMS[id]["name"])+" adquirido."
+	save_progress()
 	hud.update_view()
+	return true
+
+func equip_item(id: String) -> bool:
+	if not owned_gear.has(id):
+		return false
+	if equipped_gear.has(id):
+		equipped_gear.erase(id)
+		message=str(ITEMS[id]["name"])+" retirado."
+	else:
+		equipped_gear[id]=true
+		message=str(ITEMS[id]["name"])+" equipado."
+	refresh_equipment()
+	save_progress()
+	hud.update_view()
+	return true
 
 func toggle_equipment() -> void:
-	if not has_gear:
-		message="Você ainda não possui equipamento."
-		return
-	hero.equipment = not hero.equipment
-	hero.queue_redraw()
-	message = "Equipamento de aço" if hero.equipment else "Traje inicial"
+	hud.toggle_bag()
 
 func toggle_gender() -> void:
 	hero.gender = "female" if hero.gender == "male" else "male"
@@ -694,7 +796,7 @@ func toggle_gender() -> void:
 func damage_enemy(amount: int = -1) -> void:
 	if enemy.hp<=0:
 		return
-	var damage: int = amount if amount>=0 else (20 if hero.equipment else 10)
+	var damage: int = amount if amount>=0 else attack_value()
 	enemy.hp = maxi(0,enemy.hp-damage)
 	enemy.queue_redraw()
 	message = "Golpe certeiro · %d de dano" % damage
@@ -733,10 +835,7 @@ func _physics_process(dt: float) -> void:
 	var moving := move_route(dt)
 	if moving or aim>=0 or target:
 		queue_redraw()
-	npc_clock+=dt
-	if npc_clock>=.10:
-		tick_residents(npc_clock)
-		npc_clock=0.0
+	tick_residents(dt)
 	if attack_requested:
 		attack_requested = false
 		if target and area=="outpost" and enemy.hp > 0 and pos.distance_to(enemy_pos)<=1.5 and attack_time<=0 and clear_line(pos,enemy_pos):
@@ -767,7 +866,7 @@ func _physics_process(dt: float) -> void:
 			enemy.face(iso(pos)-iso(enemy_pos))
 			if enemy_attack<=0:
 				enemy_attack=.9
-				hero.hp=maxi(0,hero.hp-(5 if hero.equipment else 8))
+				hero.hp=maxi(0,hero.hp-maxi(1,8-defense_value()))
 		else:
 			enemy_route.clear()
 		if enemy_pos.distance_to(old)>0.001:
@@ -796,6 +895,10 @@ func _physics_process(dt: float) -> void:
 		enemy_pos=Vector2(HUNT)
 		message="Você voltou à capital."
 	cam.position=hero.position+Vector2(0,-28)
+	save_clock+=dt
+	if save_clock>=20.0:
+		save_clock=0.0
+		save_progress()
 	hud_clock+=dt
 	cull_clock+=dt
 	if hud_clock>=.10:
@@ -878,13 +981,16 @@ func smoke() -> void:
 	pos=Vector2(START)
 	assert(can_step(START,START))
 	assert(not can_step(START,Vector2i(-1,-1)))
-	toggle_equipment()
-	assert(not hero.equipment)
-	has_gear=true
-	toggle_equipment()
-	assert(hero.equipment)
-	toggle_equipment()
-	assert(not hero.equipment)
+	assert(not equip_item("shield"))
+	pos=merchant_cell()
+	assert(buy_item("sword"))
+	assert(gold==5 and owned_gear.has("sword") and not buy_item("sword"))
+	assert(equip_item("sword") and attack_value()==20 and defense_value()==0)
+	assert(equip_item("sword") and attack_value()==10)
+	gold=18
+	assert(buy_item("shield") and gold==0)
+	assert(equip_item("shield") and defense_value()==3 and attack_value()==10)
+	assert(equip_item("shield") and defense_value()==0)
 	toggle_gender()
 	assert(hero.gender=="female")
 	load_area("capital")

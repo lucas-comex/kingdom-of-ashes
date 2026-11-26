@@ -18,6 +18,8 @@ var quest_text: Label
 var status_cache: String = ""
 var skill_labels: Array[Label] = []
 var mana_label: Label
+var gear_buttons: Dictionary = {}
+var shop_buttons: Dictionary = {}
 
 func panel_style() -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
@@ -48,7 +50,7 @@ func build(w) -> void:
 	root.add_child(top)
 	top.position=Vector2(16,16)
 	top.add_theme_stylebox_override("panel",panel_style())
-	var title:=make_label("KINGDOM OF ASHES  /  REBORN 0.6",18)
+	var title:=make_label("KINGDOM OF ASHES  /  REBORN 0.7",18)
 	top.add_child(title)
 	var side:=PanelContainer.new()
 	root.add_child(side)
@@ -78,13 +80,17 @@ func build(w) -> void:
 	details=make_label("Equipamento",14)
 	col.add_child(details)
 	var e:=Button.new()
-	e.text="Equipar [K]"
+	e.text="Equipamentos [K]"
 	e.pressed.connect(world.toggle_equipment)
 	col.add_child(e)
 	var g:=Button.new()
 	g.text="Mochila [I]"
 	g.pressed.connect(toggle_bag)
 	col.add_child(g)
+	var save:=Button.new()
+	save.text="Salvar progresso"
+	save.pressed.connect(world.manual_save)
+	col.add_child(save)
 	var bottom:=PanelContainer.new()
 	root.add_child(bottom)
 	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
@@ -135,14 +141,28 @@ func build(w) -> void:
 	bag=PanelContainer.new()
 	root.add_child(bag)
 	bag.position=Vector2(16,76)
-	bag.custom_minimum_size=Vector2(250,120)
+	bag.custom_minimum_size=Vector2(284,120)
 	bag.add_theme_stylebox_override("panel",panel_style())
-	bag_text=make_label("",15)
-	bag.add_child(bag_text)
+	var contents:=VBoxContainer.new()
+	bag.add_child(contents)
+	bag_text=make_label("",13)
+	contents.add_child(bag_text)
+	var slots:=GridContainer.new()
+	slots.columns=2
+	contents.add_child(slots)
+	for id in world.ITEMS:
+		var button:=Button.new()
+		button.custom_minimum_size=Vector2(124,52)
+		button.icon=world.item_icon(id)
+		button.expand_icon=true
+		button.add_theme_constant_override("icon_max_width",30)
+		button.pressed.connect(func(): world.equip_item(id))
+		slots.add_child(button)
+		gear_buttons[id]=button
 	bag.hide()
 	shop=PanelContainer.new()
 	root.add_child(shop)
-	shop.position=Vector2(16,220)
+	shop.position=Vector2(312,76)
 	shop.custom_minimum_size=Vector2(260,160)
 	shop.add_theme_stylebox_override("panel",panel_style())
 	var stock:=VBoxContainer.new()
@@ -154,10 +174,15 @@ func build(w) -> void:
 	buy.text="Comprar poção"
 	buy.pressed.connect(world.buy_potion)
 	stock.add_child(buy)
-	var armor:=Button.new()
-	armor.text="Conjunto de aço · 60 ouro"
-	armor.pressed.connect(world.buy_gear)
-	stock.add_child(armor)
+	for id in world.ITEMS:
+		var item:=Button.new()
+		item.icon=world.item_icon(id)
+		item.expand_icon=true
+		item.add_theme_constant_override("icon_max_width",28)
+		item.text="%s · %d ouro" % [world.ITEMS[id]["name"],world.ITEMS[id]["price"]]
+		item.pressed.connect(func(): world.buy_item(id))
+		stock.add_child(item)
+		shop_buttons[id]=item
 	var close:=Button.new()
 	close.text="Fechar"
 	close.pressed.connect(func(): shop.hide())
@@ -242,7 +267,16 @@ func update_view() -> void:
 	label.text="VIDA  %d/100    "%world.hero.hp
 	status.text="%s | Nv. %d · Ouro: %d · Abates: %d"%[world.message,world.level,world.gold,world.kills]
 	if is_instance_valid(bag_text):
-		bag_text.text="MOCHILA\nOuro: %d\nPoções: %d [J]\nXP: %d\nContrato: %d/3\nEquipamento: %s" % [world.gold,world.potions,world.xp,mini(world.kills,3),"Aço" if world.has_gear else "Nenhum"]
-	details.text="Aço equipado" if world.hero.equipment else ("Aço na mochila" if world.has_gear else "Sem equipamentos")
+		bag_text.text="MOCHILA · %d ouro · %d poções\nXP: %d | Contrato: %d/3\nAtaque: %d · Defesa: %d" % [world.gold,world.potions,world.xp,mini(world.kills,3),world.attack_value(),world.defense_value()]
+	for id in gear_buttons:
+		var button: Button=gear_buttons[id]
+		var owned: bool=world.owned_gear.has(id)
+		var worn: bool=world.equipped_gear.has(id)
+		button.disabled=not owned
+		button.text=("✓ " if worn else "")+str(world.ITEMS[id]["name"]) if owned else "Vazio"
+		button.tooltip_text="%s | Ataque +%d | Defesa +%d" % [world.ITEMS[id]["name"],world.ITEMS[id]["attack"],world.ITEMS[id]["defense"]]
+	for id in shop_buttons:
+		shop_buttons[id].disabled=world.owned_gear.has(id) or world.gold<int(world.ITEMS[id]["price"])
+	details.text="ATQ %d · DEF %d" % [world.attack_value(),world.defense_value()]
 	fps_label.text="%d FPS" % Engine.get_frames_per_second()
 	dot.position=Vector2(world.pos.x/64.0*mini.size.x,world.pos.y/64.0*mini.size.y)
