@@ -93,3 +93,10 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - Fachadas distintas para ferreiro, padaria, herbalista e estalagem, com sinais próprios; telhas com microtextura. Colisões e interiores existentes mantidos.
 - Pelagem texturizada nas criaturas, mantendo espécies e animações existentes; redução de quadros redundantes e frequência de atualização de guardas no modo econômico.
 - Sem novas contas, loja, multiplayer ou mudanças no save. Arte final de mundo, oito vistas reais, animações pintadas completas e metas de FPS ainda pendentes. Testes adicionados para personalização, ícones e bordas de terreno.
+
+## 17.4–17.5 — The Visual Rebirth: cenários, arquitetura e masmorras
+- Novas texturas de pedras, margens e água; flores, cogumelos e rochas altas decorativas. Camadas existentes de árvores e biomas preservadas.
+- Pisos e paredes distintos na cripta e nos esgotos, rachaduras, umidade, ossos, sarcófagos e entulho. Decoração junto a paredes bloqueadas, sem mudar colisão, saída ou layout.
+- Forja com braseiro e bigorna; padaria com forno e pães; herbalista com prateleira; estalagem com barris. Móveis nos mesmos pontos já bloqueados; tapetes detalhados. Iluminação quente em interiores/entardecer, verde úmida em esgotos e quente sombria na cripta.
+- Cache de materiais do terreno com halo por chunk para reduzir consultas repetidas; culling de cenário acompanha largura da câmera. Modo econômico omite flores/cogumelos.
+- Testes de distinção das artes e presença dos pisos no navegador. Arte procedural rasterizada continua experimental, sem novas direções pintadas ou montanhas navegáveis; FPS real não medido. Nenhuma alteração em conta, multiplayer, economia ou saves.

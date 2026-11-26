@@ -18,6 +18,7 @@ function tile(type,variant,low=false){
  if(type==='water'){
   for(let i=0;i<(low?13:32);i++){const x=r()*64,y=r()*32,l=3+r()*16;line(c,x,y,x+l,y+(r()-.5)*1.3,color(base,12+r()*28,.22),.65+r()*.7)}
   for(let i=0;i<5;i++)ellipse(c,r()*64,r()*32,5+r()*6,1+r()*2,color(base,-17,.22));
+   if(!low){for(let j=0;j<7;j++){const x=r()*64,y=r()*32,l=7+r()*13;line(c,x,y,x+l,y+.5,color(base,48,.17),.7);line(c,x+1,y+1,x+l-2,y+1.2,color(base,-24,.23),.7)}}
  }else if(type==='bridge'){
   // Boards run along the isometric crossing; alternating seams and nail heads.
   for(let i=-7;i<11;i++){const x=i*9;poly(c,[[x,0],[x+8,0],[x+72,32],[x+64,32]],color(base,(r()-.5)*35));line(c,x,0,x+64,32,'#41372b',1.1);line(c,x+2,0,x+66,32,'#d0b18470',.7)}
@@ -31,7 +32,7 @@ function tile(type,variant,low=false){
   const count=low?75:310;
   for(let i=0;i<count;i++){const x=r()*64,y=r()*32,d=(r()-.5)*48; c.fillStyle=color(base,d,.40+r()*.35);c.fillRect(x,y,.5+r()*2,.5+r()*.75)}
   for(let i=0;i<(low?10:32);i++){const x=r()*64,y=r()*32,l=1.2+r()*2.8;line(c,x,y,x-.7,y-l,color(base,-26,.8),.7);line(c,x,y,x+1.4,y-l*.75,color(base,36,.75),.65);if(i%7===0)ellipse(c,x+2,y,.9,.6,'#b6a37190')}
-  if(type==='moor')for(let i=0;i<6;i++)ellipse(c,r()*64,r()*32,2+r()*4,.7+r(), '#343e3590');
+  if(type==='moor')for(let i=0;i<8;i++)ellipse(c,r()*64,r()*32,2+r()*4,.7+r(), '#343e3590');if(type==='highland'&&!low)for(let i=0;i<6;i++){const x=r()*64,y=r()*32,w=2+r()*5;poly(c,[[x-w,y],[x-w*.35,y-w*.4],[x+w*.65,y-w*.35],[x+w,y],[x,y+w*.25]],color(base,-15,.9));line(c,x-w*.35,y-w*.4,x+w*.65,y-w*.35,color(base,35,.7),.7)}
  }
  c.restore();const pixels=c.getImageData(0,0,64,32),v=pixels.data;for(let k=0;k<v.length;k+=4)if(v[k+3]>96)v[k+3]=255;else v[k+3]=0;c.putImageData(pixels,0,0);return out
 }
@@ -65,6 +66,8 @@ function tree(kind,v){const o=canvas(192,240),c=o.getContext('2d'),r=rng(911+v*9
 }
 function detail(kind,v){const o=canvas(112,92),c=o.getContext('2d'),r=rng(1529+v*2311+kind.length*517);shadow(c,59,75,40,10);
  if(kind==='rock'){const p=[[18,65],[25,42],[46,24],[73,29],[94,49],[100,70],[70,81],[39,78]];poly(c,p,'#54574b');poly(c,[[25,42],[46,24],[73,29],[84,43],[52,59]],'#93917d');poly(c,[[18,65],[25,42],[52,59],[39,78]],'#777b69');poly(c,[[52,59],[84,43],[94,49],[100,70],[70,81]],'#4e564d');for(let i=0;i<45;i++){let x=30+r()*54,y=40+r()*27;line(c,x,y,x+2+r()*4,y-1,'#b6b09945',.8)}for(let i=0;i<16;i++)ellipse(c,27+r()*40,49+r()*16,2+r()*3,1+r()*2,'#667443a0')}
+ else if(kind==='cliff'){const p=[[8,72],[18,37],[33,21],[56,10],[78,21],[101,45],[106,70],[75,84],[42,81]];poly(c,p,'#42453e');poly(c,[[18,37],[33,21],[56,10],[78,21],[65,36],[42,47]],'#89877a');poly(c,[[8,72],[18,37],[42,47],[35,76]],'#686b5d');poly(c,[[42,47],[65,36],[75,84],[35,76]],'#50564b');poly(c,[[65,36],[78,21],[101,45],[106,70],[75,84]],'#383f38');c.save();c.beginPath();p.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();c.clip();for(let i=0;i<140;i++){const x=12+r()*92,y=15+r()*67;line(c,x,y,x+(r()-.4)*6,y+2+r()*8,r()<.5?'#b3ad8b55':'#252e2855',.6+r()*.6)}for(let i=0;i<17;i++)ellipse(c,14+r()*80,64+r()*14,1+r()*4,1+r()*2,'#68764b90');c.restore()}
+ else if(kind==='flowers'||kind==='mushrooms'){for(let j=0;j<16;j++){const x=28+r()*54,y=66+r()*10,len=4+r()*14;line(c,x,y,x+(r()-.5)*3,y-len,'#52643b',.8);if(kind==='flowers'){const fill=['#c3aa67','#a9a0a0','#8e796f'][j%3];for(let k=0;k<5;k++)ellipse(c,x+Math.cos(k*1.256)*1.8,y-len+Math.sin(k*1.256)*1.1,1.2,.8,fill);ellipse(c,x,y-len,.8,.6,'#d7b875')}else{line(c,x,y,x,y-len*.65,'#b2a38a',1.4);ellipse(c,x,y-len*.65,2+r()*2.5,1.5+r()*1.2,j%2?'#a47c56':'#79604d');ellipse(c,x-.8,y-len*.65-.6,.8,.5,'#dec3a0')}}}
  else if(kind==='reeds'){for(let i=0;i<19;i++){const x=25+r()*58,y=68+r()*10,h=14+r()*40,dx=(r()-.5)*17;line(c,x,y,x+dx,y-h,'#6a7746',1+r()*2);if(i%3===0)ellipse(c,x+dx,y-h,2,5,'#65503b')}}
  else if(kind==='stump'){poly(c,[[37,73],[40,37],[70,35],[76,70],[89,78],[57,76],[25,80]],'#594936');ellipse(c,56,38,18,8,'#b29a65');ellipse(c,56,38,11,5,'#887344');ellipse(c,56,38,6,3,'#c1a87b');for(let i=0;i<9;i++)line(c,40+i*3,45,36+i*4,72,'#302e2390',1.2)}
  else {const base=kind==='shrub'?[76,97,49]:[112,100,52];crown(c,r,55,57,37,19,base,130);for(let i=0;i<12;i++)ellipse(c,28+r()*50,46+r()*23,1.2,1.2,kind==='shrub'?'#d3bc76':'#9d613d')}
@@ -76,5 +79,5 @@ function edge(from,to,side,variant=0){const key=[from,to,side,variant%4].join(':
  c.save();c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();c.clip();const grad=c.createLinearGradient(mx,my,mx+(32-mx)*.55,my+(16-my)*.55);grad.addColorStop(0,color(target,0,.62));grad.addColorStop(.45,color(target,0,.30));grad.addColorStop(1,color(target,0,0));c.fillStyle=grad;c.fillRect(0,0,64,32);
  for(let i=0;i<22;i++){const u=r(),v=r()*.42,x=a[0]+(b[0]-a[0])*u,y=a[1]+(b[1]-a[1])*u;ellipse(c,x+(32-x)*v,y+(16-y)*v,.5+r()*1.6,.4+r()*.8,color(target,(r()-.5)*36,.24*(1-v)))}c.restore();if(edgeCache.size>256)edgeCache.delete(edgeCache.keys().next().value);edgeCache.set(key,out);return out}
 function contact(c,x,y,variant){const r=rng(variant*137+89);for(let i=0;i<6;i++){const a=r()*Math.PI*2,d=2+r()*10;ellipse(c,x+Math.cos(a)*d,y+Math.sin(a)*d*.4,1+r()*2,.5+r()*.8,'rgba(35,33,24,.17)')}}
-window.KOAArt={tile,tree,detail,shore,edge,contact};
+window.KOAArt={tile,tree,detail,shore,edge,contact,revision:'17.4'}
 })();
