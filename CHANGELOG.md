@@ -81,3 +81,7 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - Ground palette, finer foliage and architecture texture contrast revised; static cached landscape retained. Corpses now retain the defeated creature's actual texture instead of geometric placeholders.
 - Viewport fills available width with dynamically resized Phaser camera and updated pointer coordinates; compact dark HUD; loot minimum height and saved panel layout correction.
 - Tests assert bundled raster activation and viewport fill, plus existing gameplay regressions. Real-device FPS and final appearance still need verification.
+
+## 17.2.1 — Nitidez e legibilidade
+- Oito quadros (parado e passo principal de cada vista masculina/feminina) no tamanho nativo de 96px, sobrepostos ao atlas compacto; os outros oito quadros mantêm a versão comprimida. Arquivo adicional de 6.846 bytes. Equipamentos continuam independentes.
+- Nomes de NPCs mais próximos e menos poluição visual na praça. Diagnóstico informa quantidade de quadros nativos. Sem mudanças no save ou nas regras do jogo.
