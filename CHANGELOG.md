@@ -1,5 +1,22 @@
 # Kingdom of Ashes — Registro de desenvolvimento
 
+## 16.0.4 — Equipamento não é skin
+- Equipamentos comuns podem ser retirados e recolocados sem jogar o item no chão.
+- Coleção e equipamento ativo são estados separados, salvos e compatíveis com saves antigos.
+- Trocar equipamento raro no mesmo slot guarda o comum; retirada da peça não deixa a camada fixa.
+- Arcos e cajados não aparecem mais quando não há arma equipada.
+- Testes de mudança real de pixels ao equipar/retirar capacete, armadura, escudo e arma.
+- Validação pendente. Botas e anéis ainda não têm camadas visuais exclusivas; skins pagas permanecem futuras.
+
+## 16.0.3 — Portal do reino e criador de personagens (experimental)
+- Nova tela inicial responsiva, com ilustração original SVG do reino, título em serifas medievais e opções de acesso.
+- Login/cadastro online são interfaces desativadas; nenhum dado de senha é coletado. O servidor de autenticação ainda não existe.
+- Criação local: masculino/feminino, quatro vocações visuais, quatro penteados, quatro estilos de barba, cores livres de pele/cabelo/barba, prévia rotativa e opção de ocultar elmo.
+- Arte original procedural em camadas, integrada ao protagonista em oito direções e animações básicas. A aparência é salva separadamente, não altera o save existente.
+- A armadura equipada aparece no modelo; o controle de skin prepara a configuração para cosméticos futuros, sem loja nem itens pagos. Não existem skins compráveis nesta versão.
+- As quatro vocações ainda compartilham mecânicas existentes. Arte final pintada, NPCs únicos, equipamentos individuais completos e autenticação real são pendentes.
+- Testes de navegador adicionados; resultado pendente.
+
 ## 16.0.2 — Controle e nitidez do herói
 - Reduz o crescimento da velocidade por nível de 4% para 0,5%, com teto de +40% (3,5 unidades/s); nível 12: 2,6375 unidades/s, nível 500: 3,5.
 - Testes de velocidade nos níveis 1, 12, 100, 500 e 1000 e parada após soltar a tecla.
@@ -22,3 +39,10 @@
 
 ## Próximas etapas — substituição gráfica
 Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cenário; 16.4 interface. Consolidação e desempenho após as etapas gráficas. O ROADMAP-WORLD-ART.md conserva o planejamento histórico de expansão do mundo, cujas numerações divergem; não considerar as duas sequências equivalentes.
+
+## 16.0.5 — Inventário e HUD compactos
+- Espadas desenhadas na mão independentemente da vocação; calças e botas têm máscaras visuais separadas.
+- Compras e loot entram na mochila; clique para equipar, clique no slot lateral para retirar.
+- Sete slots laterais permanentes, barra inferior reduzida e ações de combate recolhíveis.
+- Calças e botas iniciais gratuitas, concedidas uma vez na migração; novos itens de pernas no loot de esqueletos.
+- Testes de camadas, mochila e painel lateral atualizados. Validação pendente.
