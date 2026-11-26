@@ -29,7 +29,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      assert.equal(await page.locator('#demoLogin').isEditable(),true);
      assert.equal(await page.locator('#demoPassword').isEditable(),true);
      assert.equal(await page.locator('#start').isVisible(),true);
-     assert.ok((await page.locator('#kingdomBackdrop').getAttribute('src')).includes('Aerial_view_of_Hohenzollern_Castle'));
+     assert.ok((await page.locator('#kingdomBackdrop').evaluate(e=>getComputedStyle(e).backgroundImage)).includes('kingdom-dark.webp'));
      await page.screenshot({path:'artifacts/landing-22.1.png'});
      await page.locator('#registerTab').click();
      assert.match(await page.locator('#accountNote').textContent(),/desenvolvimento/);

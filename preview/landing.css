@@ -46,3 +46,8 @@
 #menu .koa-landing-footer{position:relative;text-align:center;font-size:10px;line-height:1.8;color:#d7c7ab;letter-spacing:.08em;margin:12px auto 0}
 #menu .koa-landing-footer a{color:#e4d5b8;text-decoration:underline}
 @media(max-width:780px){#menu{padding:18px 16px}#menu .koa-landing{display:flex;flex-direction:column;gap:24px;min-height:auto;justify-content:flex-start}#menu .koa-brand{align-self:center;flex:auto;text-align:center;padding:22px 0 8px;max-width:none}#menu .koa-brand h1{font-size:clamp(42px,10vw,70px)}#menu .koa-rule{margin:12px auto}#menu .koa-menu-card{width:100%;flex:auto;padding:22px;max-width:440px}#menu .koa-backdrop{object-position:32% center}#menu .koa-backdrop-shade{background:linear-gradient(0deg,#0b0e0de0,#11150f26 100%)}}
+
+/* 22.2: approved original dark kingdom raster, with previous photo only as fallback. */
+#menu .koa-backdrop{background-image:url("assets/kingdom-dark.webp"),url("https://thumb.wikimedia.org/wikipedia/commons/thumb/d/da/Aerial_view_of_Hohenzollern_Castle_%282017%29.jpg/1280px-Aerial_view_of_Hohenzollern_Castle_%282017%29.jpg");background-size:cover,cover;background-position:center center,40% 46%;background-repeat:no-repeat;filter:none}
+#menu .koa-backdrop-shade{background:linear-gradient(90deg,#090c0d14 0%,#0a0e101a 48%,#0a0e1055 78%,#0a0e1077 100%),linear-gradient(0deg,#090c0d88 0%,transparent 45%)}
+@media(max-width:780px){#menu .koa-backdrop{background-position:42% center,32% center}#menu .koa-backdrop-shade{background:linear-gradient(0deg,#0a0e10b0,transparent 100%)}}
