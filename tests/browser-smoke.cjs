@@ -28,7 +28,11 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
    const expectedWorldSize=['preview','eco','level100','level1000'].includes(mode)?160:80;
     await page.waitForFunction(size=>window.koaStats?.worldSize===size,expectedWorldSize,{timeout:20000});
     assert.equal(await page.evaluate(()=>window.koaStats.worldSize),expectedWorldSize);
-   if(mode==='level100'||mode==='level1000'){
+   if(expectedWorldSize===160){
+     const art=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],tile=window.KOAArt.tile('plaza',3),rgba=tile.getContext('2d').getImageData(0,0,64,32).data;let painted=0;for(let i=3;i<rgba.length;i+=4)if(rgba[i])painted++;return {version:window.koaPerf.artVersion,painted,artTextures:w.textures.getTextureKeys().filter(k=>k.startsWith('art-')).length,local:w.sceneryActive.size,total:w.trees.length}});
+     assert.equal(art.version,'15.8');assert.ok(art.painted>800&&art.painted<1500,'isometric tile has a real painted diamond');assert.ok(art.artTextures>0,'new artwork active');assert.ok(art.local<art.total/4,'local scenery remains bounded');console.log('landscape artwork PASS',art);
+    }
+    if(mode==='level100'||mode==='level1000'){
     assert.deepEqual(await page.evaluate(()=>({level:window.koaStats.level,hp:window.koaStats.maxHP,mana:window.koaStats.maxMana,xp:window.koaStats.xpNeeded,speed:window.koaStats.speed})),mode==='level1000'?{level:1000,hp:15085,mana:10090,xp:10140000,speed:102.4}:{level:100,hp:1585,mana:1090,xp:114000,speed:12.4});
     assert.equal(await page.evaluate(()=>window.koaSave()),false);
     assert.equal(await page.evaluate(()=>localStorage.getItem('koa-preview-save-v1')),null);
