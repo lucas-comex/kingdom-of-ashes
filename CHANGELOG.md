@@ -106,3 +106,8 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - Filtros por categoria e ordenação por nome/raridade na mochila, comparação de bônus de aprimoramento, progresso visual no bestiário, resumo de saque e botão de recolher tudo fixo.
 - Orçamento adaptativo de efeitos: após duas amostras abaixo de 38 FPS reduz frequência de animações/efeitos e desliga reflexos; após três acima de 53 FPS restaura. Modo econômico/qualidade baixa mantêm redução. Configuração desativável. Não altera passo de simulação, dano ou XP. Diagnóstico registra estado e quantidade de texturas.
 - Testes de seis silhuetas/animações, cache e filtros; validação pendente. Sem metas de FPS comprovadas, arte de oito direções pintadas ou reconstrução integral concluída. Sem alterações de conta, rede ou salvamentos de personagem.
+
+## 17.9 — Encaixe de equipamentos e poses de personagem
+- Recorte automático das margens transparentes do atlas e encaixes independentes de gênero, frente/costas e ação. Arma vinculada à mão, escudo elevado ao bloquear, caminhada em seis passos com quatro quadros distintos, inclinação de torso e poses de combate a partir da arte raster. Laterais aproximadas por transformação, não novos desenhos de oito ângulos.
+- Variações de cor estáveis por identidade de equipamento, sem mudar estatísticas. Avatar lateral acompanha peças equipadas. Cache reaproveitável de aldeões por aparência e de recortes dos itens.
+- Fase de caminhada acompanha distância realmente percorrida, não velocidade nominal do relógio; velocidade e colisões mantidas. Testes novos de encaixe, caminhada, ataque, direção lateral e distinção entre equipamentos. Arte pintada final e desempenho no dispositivo do usuário não verificados.
