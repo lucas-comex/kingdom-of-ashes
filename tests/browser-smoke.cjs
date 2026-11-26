@@ -135,6 +135,8 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      });
      for(const layer of addedLayers)assert.deepEqual(layer,{equipped:true,changed:true,removed:true});
      assert.equal(await page.locator('#sideGear [data-equip-slot]').count(),7);
+     const creatures=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],out=[];for(const k of ['lobo','boar','bear']){const e=w.enemies.find(e=>e.kind===k),a=window.KOACreatures.texture(w,k,'south',0,'stance'),b=window.KOACreatures.texture(w,k,'west',1,'run');out.push({kind:k,exists:!!e,size:e.g.displayWidth,framesDiffer:w.textures.get(a).getSourceImage().toDataURL()!==w.textures.get(b).getSourceImage().toDataURL()})}return out});
+     assert.ok(creatures.every(e=>e.exists&&e.framesDiffer));assert.ok(creatures[0].size<creatures[1].size&&creatures[1].size<creatures[2].size);
      const ranged=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],out=[];for(const [id,kind,bit,mana] of [['trainingBow','bow',1024,0],['ashWand','wand',4096,6],['oakStaff','staff',2048,6]]){if(!w.relicBag.includes(id))w.relicBag.push(id);window.koaEquip(id);out.push({kind:w.weaponKind(),range:w.attackReach(),mana:w.weaponMana(),visible:!!(w.visualGear()&bit)});window.koaEquip(id)}return out});
      assert.deepEqual(ranged,[{kind:'bow',range:5.25,mana:0,visible:true},{kind:'wand',range:5.25,mana:6,visible:true},{kind:'staff',range:5.25,mana:6,visible:true}]);
      assert.equal(await page.locator('#hotbarDetails').evaluate(e=>e.open),false);
