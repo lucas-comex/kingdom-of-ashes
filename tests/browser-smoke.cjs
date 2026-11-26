@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname,'..');
-const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg+xml','.css':'text/css'};
+const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg+xml','.css':'text/css','.png':'image/png'};
 (async()=>{
  const server=http.createServer((req,res)=>{
   const url=new URL(req.url,'http://127.0.0.1');
@@ -39,7 +39,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
 
     }
     if(mode==='level100'||mode==='level1000'){
-    assert.deepEqual(await page.evaluate(()=>({level:window.koaStats.level,hp:window.koaStats.maxHP,mana:window.koaStats.maxMana,xp:window.koaStats.xpNeeded,speed:window.koaStats.speed})),mode==='level1000'?{level:1000,hp:15085,mana:10090,xp:10140000,speed:102.4}:{level:100,hp:1585,mana:1090,xp:114000,speed:12.4});
+    assert.deepEqual(await page.evaluate(()=>({level:window.koaStats.level,hp:window.koaStats.maxHP,mana:window.koaStats.maxMana,xp:window.koaStats.xpNeeded,speed:window.koaStats.speed})),mode==='level1000'?{level:1000,hp:15085,mana:10090,xp:10140000,speed:3.5}:{level:100,hp:1585,mana:1090,xp:114000,speed:3.5});
     assert.equal(await page.evaluate(()=>window.koaSave()),false);
     assert.equal(await page.evaluate(()=>localStorage.getItem('koa-preview-save-v1')),null);
     await page.screenshot({path:'artifacts/'+mode+'.png'});
@@ -48,6 +48,51 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
     await page.close();continue;
    }
    if(mode==='preview'){
+     const movement=await page.evaluate(()=>{
+       const w=window.koaGame.scene.getScenes(true)[0], old=w.level, p={...w.p};
+       const speeds=[1,12,100,500,1000].map(l=>{w.level=l;return w.moveSpeed()});
+       w.level=500;w.goal=null;w.path=[];w.target=null;
+       w.keys.D.isDown=true;w.update(0,80);w.keys.D.isDown=false;
+       const after={...w.p};w.update(0,80);const released={...w.p};
+       w.level=old;w.p=p;return {speeds,distance:Math.hypot(after.x-p.x,after.y-p.y),drift:Math.hypot(released.x-after.x,released.y-after.y)};
+     });
+     assert.deepEqual(movement.speeds.map(s=>Math.round(s*10000)/10000),[2.5,2.6375,3.5,3.5,3.5]);
+     assert.ok(movement.distance<=.281,'a single movement tick must remain bounded');
+     assert.equal(movement.drift,0,'release must stop manual movement');
+     if(process.env.KOA_REQUIRE_HD==='1')assert.equal(await page.evaluate(()=>window.KOAFlareHeroScale),1,'HD source assets must be active');
+     console.log('bounded player movement PASS',movement);
+     const sprites=await page.evaluate(()=>{
+       const scene=window.koaGame.scene.getScenes(true)[0], flare=window.KOAFlare;
+       const dirs=Object.keys(flare.dirs), states={stance:4,run:8,swing:4,block:2,hit:2,shoot:4,cast:4,die:6};
+       const failures=[], keys=new Set(), checked=new Set();
+       function check(role,dir,frame,gear,action){
+         const key=flare.texture(scene,role,dir,frame,gear,action);
+         if(!key||!scene.textures.exists(key)){failures.push([role,dir,frame,gear,action]);return key}
+         if(!checked.has(key)){
+           const canvas=scene.textures.get(key).getSourceImage(), rgba=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+           if(!rgba.some((v,i)=>i%4===3&&v>0))failures.push(['transparent',key]);
+           checked.add(key);
+         }
+         keys.add(key);return key;
+       }
+       for(const dir of dirs){
+         for(const [action,count] of Object.entries(states))for(let f=0;f<count;f++)check('hero',dir,f,15,action);
+         for(const role of Object.keys(flare.roles))for(let f=0;f<4;f++)check(role,dir,f,0);
+       }
+       const variants=[0,1,2,4,8].map(mask=>check('hero','south',0,mask,'stance'));
+       const hashes=variants.map(key=>{
+         if(!key)return null;
+         const canvas=scene.textures.get(key).getSourceImage(), pixels=canvas.getContext('2d').getImageData(0,0,96,96).data;
+         let hash=2166136261;for(const value of pixels)hash=Math.imul(hash^value,16777619);return hash;
+       });
+       const live=scene.hero.texture.key;
+       return {failures,unique:keys.size,gearVariants:new Set(hashes).size,live};
+     });
+     assert.deepEqual(sprites.failures,[],'FLARE sprites must render in all supported directions and frames');
+     assert.ok(sprites.unique>=440,'distinct animation textures');
+     assert.equal(sprites.gearVariants,5,'each equipment layer must change the rendered pixels');
+     assert.ok(sprites.live.startsWith('flare-unit-hero-'),'live hero must use imported art');
+     console.log('FLARE character and equipment PASS',sprites);
      await page.locator('#quickEditMode').click();
      await page.locator('#quickSlots [data-index="1"]').click();
      await page.locator('#quickAction').selectOption('X');
