@@ -12,7 +12,7 @@ function shade(hex,f){const n=parseInt(hex.slice(1),16);return '#'+[n>>16&255,n>
 function paint(canvas,p,dir='south',frame=0,gear=0,action='stance'){
  const c=canvas.getContext('2d');c.clearRect(0,0,canvas.width,canvas.height);c.save();c.scale(canvas.width/96,canvas.height/96);
  const d=dirs.indexOf(dir),back=d===3||d===4||d===5,side=d===2||d===6,flip=d>0&&d<4?-1:1,turn=side?5:d%2?3:0;
- const female=p.gender==='female', [cloth,trim]=vocationColors[p.vocation],armor=!!(gear&33),helm=!!(gear&2)&&!p.hideHelmet,weapon=!!(gear&8),shield=!!(gear&68);
+ const female=p.gender==='female', [cloth,trim]=vocationColors[p.vocation],armor=!!(gear&33),helm=!!(gear&2)&&!p.hideHelmet,weapon=!!(gear&8),shield=!!(gear&68),legs=!!(gear&512),boots=!!(gear&128);
  const walk=action==='run'?Math.sin(frame*Math.PI/4):0,bob=action==='run'?Math.abs(walk)*1.5:0,swing=action==='swing'?(frame/3)*9:0;
  const skin=p.skin,hair=p.hairColor,beard=p.beardColor,shoulders=female?10:13,waist=female?7:10;
  function ellipse(x,y,rx,ry,fill,stroke){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=.65;c.stroke()}}
@@ -24,8 +24,8 @@ function paint(canvas,p,dir='south',frame=0,gear=0,action='stance'){
  if(p.hair==='long'||p.hair==='tied')path([[-6,-60],[5,-62],[9,-44],[5,-33],[-4,-35],[-9,-45]],gradient(-8,-60,16,20,[shade(hair,1.4),hair,shade(hair,.6)]));
  if(p.vocation==='sorcerer'||p.vocation==='druid'||p.vocation==='archer')path([[-shoulders,-48],[shoulders,-48],[shoulders+3,-9],[2,-5],[-shoulders-3,-10]],gradient(-12,-40,24,30,[shade(cloth,.55),cloth,shade(cloth,.52)]));
  for(const s of [-1,1]){const lx=s*(side?3:5),k=walk*s*6,foot=k+turn*.3;
- path([[lx-4,-27],[lx+4,-27],[lx+3+k*.35,-13],[lx+3+foot,-3],[lx-4+foot,-3],[lx-3+k*.35,-14]],armor?steel:leather);
- path([[lx-4+foot,-8],[lx+4+foot,-8],[lx+5+foot,0],[lx-5+foot,0],[lx-6+foot,-3]],leather);line([[lx-4+foot,-1],[lx+4+foot,-1]],'#b08b5d',.7)}
+ path([[lx-4,-27],[lx+4,-27],[lx+3+k*.35,-13],[lx+3+foot,-3],[lx-4+foot,-3],[lx-3+k*.35,-14]],legs?steel:fabric);
+ path([[lx-4+foot,-8],[lx+4+foot,-8],[lx+5+foot,0],[lx-5+foot,0],[lx-6+foot,-3]],boots?leather:shade(cloth,.65));line([[lx-4+foot,-1],[lx+4+foot,-1]],boots?'#d6b57d':'#494039',.7);if(boots)line([[lx-4+foot,-8],[lx+4+foot,-8]],'#b08b5d',1.5)}
  if(p.vocation==='sorcerer'||p.vocation==='druid')path([[-waist,-30],[waist,-30],[waist+5,-13],[2,-8],[-waist-5,-13]],fabric);
  for(const s of [-1,1]){const x=s*shoulders*.85,y=-47,arm=walk*s*5+(s===1?swing:0);
  path([[x-4,y-1],[x+4,y],[x+s*3+arm,-32],[x+s*2+arm,-25],[x-s*3+arm,-26],[x-s*2+arm,-34]],armor?steel:fabric);ellipse(x+s*2+arm,-25,3.1,3.8,flesh,'#403129');if(armor)ellipse(x,y+1,6,5,steel,'#333b42')}
@@ -38,18 +38,21 @@ function paint(canvas,p,dir='south',frame=0,gear=0,action='stance'){
  if(p.beard!=='none'){let ext=p.beard==='full'?4:p.beard==='goatee'?3:1.5;path([[hx-5,-60],[hx-2,-57],[hx+3,-57],[hx+5,-60],[hx+4,-56],[hx,-55-ext],[hx-4,-56]],beard)}}
  if(p.hair!=='shaved'||back){path([[hx-8,-65],[hx-8,-70],[hx-3,-74],[hx+5,-73],[hx+8,-69],[hx+7,-63],[hx+3,-69],[hx-2,-66],[hx-5,-64]],gradient(hx-8,-74,16,10,[shade(hair,1.65),hair,shade(hair,.65)]));if(back||p.hair==='long')path([[hx-7,-69],[hx+7,-69],[hx+7,-55],[hx+2,-52],[hx-7,-55]],hair);if(p.hair==='tied')ellipse(hx+6,-69,4,4,hair,'#302421')}
  if(helm){path([[hx-9,-65],[hx-8,-72],[hx,-76],[hx+8,-72],[hx+9,-65],[hx+6,-58],[hx+4,-65],[hx-4,-65],[hx-6,-58]],steel);line([[hx,-75],[hx,-66]],'#e6e3cf',1)}
- const hand=shoulders+2+swing;
- if(p.vocation==='warrior'){if(weapon){line([[hand,-28],[hand+8,-54-swing]],'#282b30',5);line([[hand,-28],[hand+8,-54-swing]],'#c4c8c5',3);line([[hand-3,-30],[hand+5,-28]],trim,2)}}
- if(weapon&&p.vocation==='archer'){c.strokeStyle='#a78454';c.lineWidth=2.2;c.beginPath();c.moveTo(-hand,-55);c.quadraticCurveTo(-hand-12,-38,-hand,-18);c.stroke();line([[-hand,-55],[-hand,-18]],'#dbcaab',.65)}
- if(weapon&&(p.vocation==='sorcerer'||p.vocation==='druid')){line([[hand,-3],[hand+3,-62]],'#6d5136',2.8);ellipse(hand+3,-64,3.1,4,p.vocation==='druid'?'#9ba962':'#9b85c4','#e0cfac')}
+ // Equipment determines the weapon, not vocation. Current weapon items are blades.
+ if(weapon){const hand=shoulders*.85+2+walk*5+swing,hy=-25,tx=hand+12+swing*.6,ty=-57+swing*.5;
+   path([[hand-2,hy+3],[hand+1,hy-3],[tx-2,ty+5],[tx,ty],[tx+3,ty+6],[hand+4,hy]],gear&16?'#c59b69':'#d7dfe2','#29303a',1.2);
+   line([[hand+1,hy-2],[tx,ty+3]],'#fbf1d7',.8);
+   line([[hand-4,hy-4],[hand+5,hy+1]],trim,2.5);line([[hand,hy],[hand-3,hy+6]],'#65432b',2.8);
+   ellipse(hand,hy,2.3,2.6,flesh,'#403129');
+ }
  if(shield){path([[-shoulders-9,-40],[-shoulders+5,-40],[-shoulders+4,-29],[-shoulders-2,-24],[-shoulders-8,-29]],steel);line([[-shoulders-2,-38],[-shoulders-2,-28]],trim,1.1)}
  c.restore();
 }
 const ids={gender:'appearanceGender',vocation:'appearanceClass',hair:'appearanceHair',beard:'appearanceBeard',skin:'appearanceSkin',hairColor:'appearanceHairColor',beardColor:'appearanceBeardColor',hideHelmet:'appearanceHideHelmet',showSkin:'appearanceShowSkin'};
 function read(){return normalize(Object.fromEntries(Object.entries(ids).map(([k,id])=>[k,$(id).type==='checkbox'?$(id).checked:$(id).value])))}
-function redraw(){const p=read();paint($('appearancePreview'),p,dirs[angle],0,$('appearanceArmor').checked?15:0)}
+function redraw(){const p=read();paint($('appearancePreview'),p,dirs[angle],0,$('appearanceArmor').checked?655:0)}
 function commit(){if(custom){profile=read();try{if(!window.koaTestLevel)localStorage.setItem('koa-preview-appearance-v1',JSON.stringify(profile))}catch{}}return profile}
-function texture(scene,dir,frame,gear,action){const p=profile,key='koa-original-'+[p.gender,p.vocation,p.hair,p.beard,p.skin,p.hairColor,p.beardColor,p.hideHelmet,dir,frame,gear&111,action||'stance'].join('-');if(scene.textures.exists(key))return key;const cv=document.createElement('canvas');cv.width=cv.height=96;paint(cv,p,dir,frame,gear,action);scene.textures.addCanvas(key,cv);return key}
+function texture(scene,dir,frame,gear,action){const p=profile,key='koa-original-'+[p.gender,p.vocation,p.hair,p.beard,p.skin,p.hairColor,p.beardColor,p.hideHelmet,dir,frame,gear&1023,action||'stance'].join('-');if(scene.textures.exists(key))return key;const cv=document.createElement('canvas');cv.width=cv.height=96;paint(cv,p,dir,frame,gear,action);scene.textures.addCanvas(key,cv);return key}
 for(const [k,id] of Object.entries(ids)){const el=$(id);if(el.type==='checkbox')el.checked=profile[k];else el.value=profile[k];el.addEventListener('input',()=>{custom=true;redraw()})}
 $('appearanceArmor').addEventListener('input',redraw);$('turnPreview').onclick=()=>{angle=(angle+1)%8;redraw()};
 $('openCreator').onclick=()=>{custom=true;$('creatorPanel').hidden=!$('creatorPanel').hidden;$('openCreator').textContent=$('creatorPanel').hidden?'PERSONALIZAR PERSONAGEM':'RECOLHER PERSONALIZAÇÃO';redraw()};

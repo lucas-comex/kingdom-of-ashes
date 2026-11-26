@@ -1,0 +1,28 @@
+#play{width:min(100%,1800px);margin:3px auto}
+body>header{padding:5px 12px}body>header h1{font-size:16px}
+#stage{grid-template-columns:minmax(0,1fr) 198px;gap:3px;padding:3px;align-items:stretch}
+#viewport{display:flex;align-items:center;justify-content:center}
+#game{width:min(100%,calc((100dvh - 150px)*16/9));flex:none}
+#sideScroll{padding:3px;display:flex;flex-direction:column;gap:3px}
+.dock{margin:0}.dock h2{font-size:10px;padding:4px}
+#sideGear .paperdoll{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}
+#sideGear .equipCell{min-height:49px;min-width:0;padding:2px;overflow:hidden;line-height:1.1}
+.equipCell[data-equip]{cursor:pointer;border-color:#a99162}.equipCell:not([data-equip]){opacity:.65;cursor:default}
+#sideGear .itemIcon{width:20px;height:20px}#sideGear .equipCell small{font-size:8px;overflow:hidden;text-overflow:ellipsis;width:100%;white-space:nowrap}
+#sideGear .equipCell span{font-size:9px}.equipHint{font:9px system-ui;text-align:center;margin:3px 0;color:#afa48a}
+#sideMap svg{max-width:128px}.bagGearRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px;align-items:center}
+#hud{padding:3px 5px;border-top:1px solid #817052}#hudIdentity{margin-bottom:2px;font-size:10px}
+#bars .meter{height:15px}#bars .meter span{line-height:13px;font-size:10px}
+.quickCompact{display:flex;align-items:center;gap:5px;min-width:0}
+.quickCompact .quickHeading{flex:none;display:flex;flex-direction:column;gap:1px;font-size:9px;padding:1px}
+#quickEditMode{font-size:9px;padding:2px 4px}
+#quickSlots{flex:1;justify-content:flex-start;gap:3px;padding:2px;flex-wrap:nowrap;min-width:0;overflow-x:auto}
+#quickSlots .quickSlot{min-width:37px;flex:0 1 66px;gap:0;padding:1px 3px;font-size:9px;line-height:1.1}
+#quickSlots .quickSlot .itemIcon{width:19px;height:19px}
+#hudNotice{height:15px;font-size:10px;padding:1px}
+#tools{margin-top:1px;gap:2px;flex-wrap:wrap}#tools button{min-width:0;flex:1 0 auto;font-size:10px;padding:3px 4px;line-height:1.1}
+#hotbarDetails summary{cursor:pointer;color:#c8b991;font:10px system-ui;padding:1px 2px}
+#hotbar{margin:2px 0;gap:2px}#hotbar button{font-size:10px;padding:3px;min-width:0}
+#play:fullscreen #game{width:min(100%,calc((100dvh - 100px)*16/9))}
+body>footer{padding:2px;font-size:9px}
+@media(max-width:780px){#stage{grid-template-columns:minmax(0,1fr)}#side{display:block;min-height:135px}#sideScroll{position:relative;display:grid;grid-template-columns:1fr 1fr;max-height:190px}#sideScroll .dock:last-child{display:none}#game{width:100%}#tools button{font-size:9px;padding:3px}#touch{bottom:120px}#play:fullscreen #game{width:100%}}

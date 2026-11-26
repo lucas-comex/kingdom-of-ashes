@@ -110,7 +110,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      const gearResult=await page.evaluate(()=>{
        const w=window.koaGame.scene.getScenes(true)[0], results=[];
        for(const [slot,bit] of [['helmet',2],['armor',1],['shield',4],['sword',8]]){
-         w.acquireCommonGear(slot);
+         w.acquireCommonGear(slot);if(!w[slot])window.koaEquip('gear:'+slot);
          const before=w.visualGear(), keyOn=w.unitTexture('hero','south',0,before,'stance');
          const on=w.textures.get(keyOn).getSourceImage().toDataURL();
          const removed=window.koaEquip('gear:'+slot), after=w.visualGear(),keyOff=w.unitTexture('hero','south',0,after,'stance');
@@ -122,12 +122,19 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
        return results;
      });
      for(const item of gearResult)for(const k of ['removed','equipped','owned','stored','bitOn','bitOff','pixelsChanged','restored'])assert.equal(item[k],true,item.slot+' '+k);
-     await page.locator('#tools [data-panel=gear]').click();
-     await page.locator('[data-kind=gear] [data-equip="gear:helmet"]').click();
+     await page.locator('#sideGear [data-equip="gear:helmet"]').click();
      await page.waitForFunction(()=>window.koaStats.storedGear.helmet===true&&!(window.koaStats.visualGear&2));
-     await page.locator('[data-kind=gear] [data-equip="gear:helmet"]').click();
+     await page.locator('#tools [data-panel=bag]').click();
+     await page.locator('[data-kind=bag] [data-equip="gear:helmet"]').click();
      await page.waitForFunction(()=>!!(window.koaStats.visualGear&2));
-     await page.locator('[data-kind=gear] header button').click();
+     await page.locator('[data-kind=bag] header button').click();
+     const addedLayers=await page.evaluate(()=>{
+       const w=window.koaGame.scene.getScenes(true)[0], sample=()=>w.textures.get(w.unitTexture('hero','south',0,w.visualGear(),'stance')).getSourceImage().toDataURL();
+       return [['clothLegs',512],['leatherBoots',128]].map(([id,bit])=>{if(!w.relicBag.includes(id))w.relicBag.push(id);const before=sample();window.koaEquip(id);const equipped=!!(w.visualGear()&bit),changed=sample()!==before;window.koaEquip(id);return {equipped,changed,removed:!(w.visualGear()&bit)}});
+     });
+     for(const layer of addedLayers)assert.deepEqual(layer,{equipped:true,changed:true,removed:true});
+     assert.equal(await page.locator('#sideGear [data-equip-slot]').count(),7);
+     assert.equal(await page.locator('#hotbarDetails').evaluate(e=>e.open),false);
      assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('koa-preview-appearance-v1')).skin),'#a86c45');
      console.log('FLARE character and equipment PASS',sprites);
      await page.locator('#quickEditMode').click();

@@ -39,3 +39,10 @@
 
 ## Próximas etapas — substituição gráfica
 Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cenário; 16.4 interface. Consolidação e desempenho após as etapas gráficas. O ROADMAP-WORLD-ART.md conserva o planejamento histórico de expansão do mundo, cujas numerações divergem; não considerar as duas sequências equivalentes.
+
+## 16.0.5 — Inventário e HUD compactos
+- Espadas desenhadas na mão independentemente da vocação; calças e botas têm máscaras visuais separadas.
+- Compras e loot entram na mochila; clique para equipar, clique no slot lateral para retirar.
+- Sete slots laterais permanentes, barra inferior reduzida e ações de combate recolhíveis.
+- Calças e botas iniciais gratuitas, concedidas uma vez na migração; novos itens de pernas no loot de esqueletos.
+- Testes de camadas, mochila e painel lateral atualizados. Validação pendente.
