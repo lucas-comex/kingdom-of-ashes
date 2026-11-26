@@ -25,7 +25,8 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
    await page.goto('http://127.0.0.1:'+server.address().port+(mode==='preview'||mode==='eco'||mode==='level100'||mode==='level1000'?'/preview/index.html?test=1'+(mode==='eco'?'&eco=1':mode==='level100'?'&leveltest=100':mode==='level1000'?'&leveltest=1000':''):'/?'+(mode==='safe'?'safe=1':'test=1')),{waitUntil:'load'});
    await page.waitForFunction(()=>typeof window.koaSave==='function',null,{timeout:60000});
    if(mode==='preview'){
-     await page.locator('#registerTab').click();
+     assert.equal(await page.locator('#registerTab').isVisible(),false);
+     await page.locator('#openCreator').click();
      assert.equal(await page.locator('#creatorPanel').isVisible(),true);
      assert.equal(await page.locator('#accountPanel input[type=password]').isDisabled(),true);
      await page.locator('#appearanceGender').selectOption('female');
@@ -134,6 +135,8 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      });
      for(const layer of addedLayers)assert.deepEqual(layer,{equipped:true,changed:true,removed:true});
      assert.equal(await page.locator('#sideGear [data-equip-slot]').count(),7);
+     const ranged=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],out=[];for(const [id,kind,bit,mana] of [['trainingBow','bow',1024,0],['ashWand','wand',4096,6],['oakStaff','staff',2048,6]]){if(!w.relicBag.includes(id))w.relicBag.push(id);window.koaEquip(id);out.push({kind:w.weaponKind(),range:w.attackReach(),mana:w.weaponMana(),visible:!!(w.visualGear()&bit)});window.koaEquip(id)}return out});
+     assert.deepEqual(ranged,[{kind:'bow',range:5.25,mana:0,visible:true},{kind:'wand',range:5.25,mana:6,visible:true},{kind:'staff',range:5.25,mana:6,visible:true}]);
      assert.equal(await page.locator('#hotbarDetails').evaluate(e=>e.open),false);
      assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('koa-preview-appearance-v1')).skin),'#a86c45');
      console.log('FLARE character and equipment PASS',sprites);

@@ -46,3 +46,9 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - Sete slots laterais permanentes, barra inferior reduzida e ações de combate recolhíveis.
 - Calças e botas iniciais gratuitas, concedidas uma vez na migração; novos itens de pernas no loot de esqueletos.
 - Testes de camadas, mochila e painel lateral atualizados. Validação pendente.
+
+## 16.0.6–16.0.8 — Pacote de evolução offline
+- 16.0.6: renderizador original com anatomia proporcional, projeção em oito direções, luz e articulação, camadas independentes e supersampling; NPCs com perfis determinísticos por identidade e profissão.
+- 16.0.7: arco, varinha, cajado e espada de treino, armas de alcance 5.25, mana por ataque mágico, bônus de afinidade de 15% e cura aprimorada do druida; migração de armas gratuitas uma vez por save.
+- 16.0.8: painel lateral em formato de paperdoll, arraste de equipamentos comuns, ícones de armas e atributos da vocação, entrada offline sem formulário de conta.
+- Limitações: arte procedural iluminada ainda experimental; não é um atlas artístico final. Sem autenticação, multiplayer, loja ou skins pagas. Testes pendentes.
