@@ -61,7 +61,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      assert.deepEqual(improved,{full:true,heal:true,food:true,questCount:26,vocations:4});console.log('22.3 system regression PASS',improved);
      const raster=await page.evaluate(()=>Object.fromEntries(Object.entries(window.KOAMonsterRaster.data).map(([k,v])=>[k,Object.values(v.frames).every(rows=>new Set(rows.map(r=>r[1])).size===8)])));assert.deepEqual(raster,{esqueleto:true,cavaleiro:true});
      const respawn=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0];return [{},{sewer:true},{crypt:true},{elite:true},{dungeonBoss:true}].map(e=>w.respawnDelay(e))});assert.deepEqual(respawn,[35,45,75,90,180]);
-     const zoom=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],cv=w.game.canvas;cv.dispatchEvent(new WheelEvent('wheel',{deltaY:-100,cancelable:true,bubbles:true}));const up=w.viewZoom;cv.dispatchEvent(new WheelEvent('wheel',{deltaY:100,cancelable:true,bubbles:true}));const down=w.viewZoom;const min=w.setViewZoom(.01),max=w.setViewZoom(9);w.setViewZoom(1);return {up,down,min,max,reset:w.cameras.main.zoom}});assert.ok(zoom.up>1&&zoom.down<zoom.up);assert.deepEqual([zoom.min,zoom.max,zoom.reset],[.8,1.65,1]);
+     const zoom=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],cv=w.game.canvas;cv.dispatchEvent(new WheelEvent('wheel',{deltaY:-100,cancelable:true,bubbles:true}));const up=w.viewZoom;cv.dispatchEvent(new WheelEvent('wheel',{deltaY:100,cancelable:true,bubbles:true}));const down=w.viewZoom;const min=w.setViewZoom(.01),max=w.setViewZoom(9);w.setViewZoom(1);return {up,down,min,max,reset:w.cameras.main.zoom}});assert.ok(zoom.up>1&&zoom.down<zoom.up);assert.deepEqual([zoom.min,zoom.max,zoom.reset],[.8,1.65,1]);const viewportBox=await page.locator('#game').boundingBox();await page.mouse.move(viewportBox.x+viewportBox.width*.5,viewportBox.y+viewportBox.height*.5);await page.mouse.wheel(0,-120);await page.waitForFunction(()=>window.koaGame.scene.getScenes(true)[0].viewZoom>1);await page.mouse.wheel(0,120);await page.waitForFunction(()=>window.koaGame.scene.getScenes(true)[0].viewZoom===1);const beforeClick=await page.evaluate(()=>({...window.koaGame.scene.getScenes(true)[0].p}));await page.mouse.click(viewportBox.x+viewportBox.width*.65,viewportBox.y+viewportBox.height*.65);await page.waitForTimeout(300);assert.deepEqual(await page.evaluate(()=>({...window.koaGame.scene.getScenes(true)[0].p})),beforeClick);await page.locator('[data-camera-zoom="0.15"]').click();assert.equal(await page.locator('#zoomLevel').textContent(),'115%');await page.locator('#zoomLevel').click();
    }
    const expectedWorldSize=['preview','eco','level100','level1000'].includes(mode)?192:80;
     await page.waitForFunction(size=>window.koaStats?.worldSize===size,expectedWorldSize,{timeout:20000});
@@ -221,8 +221,8 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
     await page.evaluate(()=>window.KOAInventory.move('meat','gold'));
     assert.equal(await page.evaluate(()=>window.KOAInventory.order[0]),'meat');
     // Route through the tavern door, walk out and verify local item persistence.
-    await page.evaluate(()=>window.koaTravel(13,13));
-    await page.waitForFunction(()=>window.koaStats?.interior===0,null,{timeout:20000});
+    await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0];w.p={x:13.65,y:13.65};w.goal=null;w.path=[]});await page.keyboard.down('w');
+    await page.waitForFunction(()=>window.koaStats?.interior===0,null,{timeout:20000});await page.keyboard.up('w');
     assert.equal(await page.evaluate(()=>window.koaStats.interiorName),'Taverna do Corvo');assert.ok(await page.evaluate(()=>window.koaGame.scene.getScenes(true)[0].textures.exists('arch-room-floor-tavern')));
     assert.equal(await page.evaluate(()=>window.koaStats.nearby.length),0);
     await page.waitForTimeout(600);
