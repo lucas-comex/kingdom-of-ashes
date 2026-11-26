@@ -28,7 +28,7 @@ maxHP(){return 100+15*(this.level-1)}
 maxMana(){return 100+10*(this.level-1)}
 xpNeeded(){return 150*this.level+10*this.level*(this.level-1)}
 monsterSpeed(e){return .8*(1+.065*Math.max(0,e.level-1))}
-moveSpeed(){return 2.5*(1+.04*(this.level-1))}
+moveSpeed(){return 2.5*(1+Math.min(.40,.005*Math.max(0,this.level-1)))}
 attackRateBonus(){return Math.min(.60,.004*Math.max(0,this.level-1))}
 attackInterval(heavy=false){return (heavy?1.75:1.20)/(1+this.attackRateBonus())}
 advanceLevels(){let gained=0;while(this.xp>=this.xpNeeded()&&gained<100){this.xp-=this.xpNeeded();this.level++;this.hp=Math.min(this.maxHP(),this.hp+35);this.mana=Math.min(this.maxMana(),this.mana+20);gained++}if(gained){window.koaAudio?.play('level');this.notice='Nível '+this.level+'! Vida, mana, velocidade e cadência de ataque aumentaram.';this.hudTimer=2}return gained}

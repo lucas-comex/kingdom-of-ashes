@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname,'..');
-const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg+xml','.css':'text/css'};
+const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg+xml','.css':'text/css','.png':'image/png'};
 (async()=>{
  const server=http.createServer((req,res)=>{
   const url=new URL(req.url,'http://127.0.0.1');
@@ -39,7 +39,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
 
     }
     if(mode==='level100'||mode==='level1000'){
-    assert.deepEqual(await page.evaluate(()=>({level:window.koaStats.level,hp:window.koaStats.maxHP,mana:window.koaStats.maxMana,xp:window.koaStats.xpNeeded,speed:window.koaStats.speed})),mode==='level1000'?{level:1000,hp:15085,mana:10090,xp:10140000,speed:102.4}:{level:100,hp:1585,mana:1090,xp:114000,speed:12.4});
+    assert.deepEqual(await page.evaluate(()=>({level:window.koaStats.level,hp:window.koaStats.maxHP,mana:window.koaStats.maxMana,xp:window.koaStats.xpNeeded,speed:window.koaStats.speed})),mode==='level1000'?{level:1000,hp:15085,mana:10090,xp:10140000,speed:3.5}:{level:100,hp:1585,mana:1090,xp:114000,speed:3.5});
     assert.equal(await page.evaluate(()=>window.koaSave()),false);
     assert.equal(await page.evaluate(()=>localStorage.getItem('koa-preview-save-v1')),null);
     await page.screenshot({path:'artifacts/'+mode+'.png'});
@@ -48,6 +48,19 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
     await page.close();continue;
    }
    if(mode==='preview'){
+     const movement=await page.evaluate(()=>{
+       const w=window.koaGame.scene.getScenes(true)[0], old=w.level, p={...w.p};
+       const speeds=[1,12,100,500,1000].map(l=>{w.level=l;return w.moveSpeed()});
+       w.level=500;w.goal=null;w.path=[];w.target=null;
+       w.keys.D.isDown=true;w.update(0,80);w.keys.D.isDown=false;
+       const after={...w.p};w.update(0,80);const released={...w.p};
+       w.level=old;w.p=p;return {speeds,distance:Math.hypot(after.x-p.x,after.y-p.y),drift:Math.hypot(released.x-after.x,released.y-after.y)};
+     });
+     assert.deepEqual(movement.speeds.map(s=>Math.round(s*10000)/10000),[2.5,2.6375,3.5,3.5,3.5]);
+     assert.ok(movement.distance<=.281,'a single movement tick must remain bounded');
+     assert.equal(movement.drift,0,'release must stop manual movement');
+     if(process.env.KOA_REQUIRE_HD==='1')assert.equal(await page.evaluate(()=>window.KOAFlareHeroScale),1,'HD source assets must be active');
+     console.log('bounded player movement PASS',movement);
      const sprites=await page.evaluate(()=>{
        const scene=window.koaGame.scene.getScenes(true)[0], flare=window.KOAFlare;
        const dirs=Object.keys(flare.dirs), states={stance:4,run:8,swing:4,block:2,hit:2,shoot:4,cast:4,die:6};
