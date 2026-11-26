@@ -1,0 +1,83 @@
+extends Node2D
+
+var frames: Dictionary = {}
+var textures: Dictionary = {}
+var gender: String = "male"
+var direction: int = 7
+var state: String = "stance"
+var frame: int = 0
+var age: float = 0.0
+var equipment: bool = true
+var kind: String = "hero"
+var npc_name: String = ""
+var actor_label: String = ""
+var hp: int = 100
+var max_hp: int = 100
+
+func face(delta: Vector2) -> void:
+	if delta.length_squared() < 0.001:
+		return
+	var angle: float = atan2(delta.y, delta.x)
+	var octant: int = posmod(roundi(angle / (PI / 4.0)), 8)
+	direction = [5, 6, 7, 0, 1, 2, 3, 4][octant]
+	queue_redraw()
+
+func animate(next_state: String, dt: float) -> void:
+	if state != next_state:
+		state = next_state
+		age = 0.0
+	age += dt
+	var n: int = 4 if state == "run" or state == "swing" else (3 if state == "die" else 1)
+	var new_frame: int = mini(n - 1, int(age / 0.12)) if state == "swing" or state == "die" else int(age / 0.12) % n
+	if new_frame != frame:
+		frame = new_frame
+	queue_redraw()
+
+func layer(name: String) -> void:
+	var key: String = gender + "-" + name
+	var rows: Array = frames[key].get(state, frames[key]["stance"])
+	var row: Array = rows[mini(frame, rows.size() - 1)]
+	if int(row[1]) & (1 << direction):
+		draw_texture_rect_region(textures[key], Rect2(-48, -82, 96, 96), Rect2(direction * 96, int(row[0]) * 96, 96, 96))
+
+func _draw() -> void:
+	if kind == "hero":
+		if textures.is_empty():
+			return
+		if equipment and direction <= 2:
+			layer("blade")
+		if equipment and direction >= 4 and direction <= 6:
+			layer("shield")
+		layer("boots" if equipment else "feet")
+		layer("legs" if equipment else "pants")
+		layer("armor" if equipment else "shirt")
+		layer("hands")
+		layer("helmet" if equipment else "head")
+		if equipment and direction > 2:
+			layer("blade")
+		if equipment and (direction < 4 or direction == 7):
+			layer("shield")
+	elif kind == "goblin":
+		if not textures.has("goblin"):
+			return
+		var rows: Array = frames.get(state, frames["stance"])
+		var row: int = int(rows[mini(frame, rows.size()-1)])
+		draw_texture_rect_region(textures["goblin"], Rect2(-48,-82,96,96), Rect2(direction*96,row*96,96,96))
+	elif kind == "npc":
+		if not textures.has(npc_name):
+			return
+		var row: Array = frames[npc_name][7]
+		for candidate in frames[npc_name]:
+			if int(candidate[0]) == 0 and int(candidate[1]) == 7:
+				row = candidate
+				break
+		var sz: Vector2 = Vector2(row[4],row[5]) * 0.44
+		draw_texture_rect_region(textures[npc_name], Rect2(-Vector2(row[6],row[7])*0.44,sz),Rect2(row[2],row[3],row[4],row[5]))
+	if hp > 0 and kind != "hero":
+		var font: Font = ThemeDB.fallback_font
+		var w: float = font.get_string_size(actor_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
+		draw_string_outline(font,Vector2(-w/2,-71),actor_label,HORIZONTAL_ALIGNMENT_LEFT,-1,12,4,Color("#161713"))
+		draw_string(font,Vector2(-w/2,-71),actor_label,HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("#e4d4af"))
+		if kind == "goblin":
+			draw_rect(Rect2(-20,-66,40,4),Color("#241710"))
+			draw_rect(Rect2(-20,-66,40.0*hp/max_hp,4),Color("#b04436"))

@@ -1,3 +1,0 @@
-# FLARE character artwork
-
-Source: https://github.com/flareteam/flare-game/tree/c641d2ac2801617f6be3e327454de39250d489b9 (fantasycore). Copyright and attribution: see upstream CREDITS.txt; license: CC BY-SA 3.0 Unported (LICENSE.txt), https://creativecommons.org/licenses/by-sa/3.0/. Original source PNGs are unchanged. Runtime frame crops, scaling and layer compositions derived from these resources are distributed under CC BY-SA 3.0; the game code remains separate. This project is not endorsed by FLARE. Manifest records source paths, Git blob hashes and sizes. Some larger layers are fetched from the pinned source until vendored; smaller sheets are included locally.
