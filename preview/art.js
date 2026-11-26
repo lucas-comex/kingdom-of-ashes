@@ -8,11 +8,11 @@ function color(rgb,d=0,a=1){return 'rgba('+rgb.map(v=>clamp(Math.round(v+d),0,25
 function ellipse(c,x,y,rx,ry,fill){c.fillStyle=fill;c.beginPath();c.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),0,0,Math.PI*2);c.fill()}
 function poly(c,points,fill){c.fillStyle=fill;c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();c.fill()}
 function line(c,x,y,X,Y,stroke,w=1){c.strokeStyle=stroke;c.lineWidth=w;c.beginPath();c.moveTo(x,y);c.lineTo(X,Y);c.stroke()}
-const pal={meadow:[91,106,58],forest:[55,75,43],moor:[91,86,67],highland:[113,111,72],road:[130,113,84],plaza:[116,115,103],water:[45,78,83],bridge:[115,91,59]};
+const pal={meadow:[73,84,48],forest:[42,57,38],moor:[70,69,56],highland:[87,84,56],road:[112,92,67],plaza:[100,98,88],water:[31,59,66],bridge:[105,78,49]};
 function tile(type,variant,low=false){
  const out=canvas(64,32),c=out.getContext('2d'),base=pal[type]||pal.meadow,r=rng(38321+variant*17671+Object.keys(pal).indexOf(type)*547);
  c.save();c.beginPath();c.moveTo(32,0);c.lineTo(64,16);c.lineTo(32,32);c.lineTo(0,16);c.closePath();c.clip();
- c.fillStyle=color(base,(r()-.5)*7);c.fillRect(0,0,64,32);
+ c.fillStyle=color(base,(r()-.5)*4);c.fillRect(0,0,64,32);
  // Sparse low-frequency tonal changes rather than an artificial checkerboard.
  for(let i=0;i<9;i++)ellipse(c,r()*64,r()*32,6+r()*11,2+r()*5,color(base,(r()-.5)*28,.18));
  if(type==='water'){
@@ -28,12 +28,12 @@ function tile(type,variant,low=false){
   for(let i=0;i<(low?25:75);i++){const x=r()*64,y=r()*32;ellipse(c,x,y,.5+r()*2.1,.3+r()*.9,color(base,(r()-.5)*52,.62))}
   for(let i=0;i<5;i++){const x=r()*64,y=r()*32;ellipse(c,x,y,2+r()*2,.7+r(),color(base,-24,.4));line(c,x-2,y-.5,x+1,y-1,color(base,30,.42),.7)}
  }else{
-  const count=low?65:180;
+  const count=low?75:310;
   for(let i=0;i<count;i++){const x=r()*64,y=r()*32,d=(r()-.5)*48; c.fillStyle=color(base,d,.40+r()*.35);c.fillRect(x,y,.5+r()*2,.5+r()*.75)}
-  for(let i=0;i<(low?7:18);i++){const x=r()*64,y=r()*32,l=1.2+r()*2.8;line(c,x,y,x-.7,y-l,color(base,-26,.8),.7);line(c,x,y,x+1.4,y-l*.75,color(base,36,.75),.65);if(i%7===0)ellipse(c,x+2,y,.9,.6,'#b6a37190')}
+  for(let i=0;i<(low?10:32);i++){const x=r()*64,y=r()*32,l=1.2+r()*2.8;line(c,x,y,x-.7,y-l,color(base,-26,.8),.7);line(c,x,y,x+1.4,y-l*.75,color(base,36,.75),.65);if(i%7===0)ellipse(c,x+2,y,.9,.6,'#b6a37190')}
   if(type==='moor')for(let i=0;i<6;i++)ellipse(c,r()*64,r()*32,2+r()*4,.7+r(), '#343e3590');
  }
- c.restore();return out
+ c.restore();const pixels=c.getImageData(0,0,64,32),v=pixels.data;for(let k=0;k<v.length;k+=4)if(v[k+3]>96)v[k+3]=255;else v[k+3]=0;c.putImageData(pixels,0,0);return out
 }
 function shadow(c,x,y,rx,ry){for(let i=0;i<7;i++)ellipse(c,x,y,rx*(1-i*.075),ry*(1-i*.08),'rgba(14,20,15,.065)')}
 function trunk(c,r,x,y,top,wide=12){
@@ -44,22 +44,22 @@ function trunk(c,r,x,y,top,wide=12){
 function branch(c,x,y,X,Y,w){line(c,x,y,X,Y,'#433827',w);line(c,x-w*.17,y,X-w*.17,Y,'#88714b',w*.38)}
 function crown(c,r,x,y,rx,ry,base,points){
  // Uneven foliage masses, lit from upper left; stippled leaf clusters instead of flat circles.
- for(let j=0;j<points;j++){const a=r()*Math.PI*2,rad=Math.sqrt(r()),dx=Math.cos(a)*rx*rad,dy=Math.sin(a)*ry*rad,shade=9-dx*.12-dy*.36+(r()-.5)*27;const size=2.4+r()*6;
-  ellipse(c,x+dx+1,y+dy+2,size*1.18,size*.75,color(base,shade-23,.85));
-  ellipse(c,x+dx,y+dy,size,size*.65,color(base,shade,.95));
+ for(let j=0;j<points;j++){const a=r()*Math.PI*2,rad=Math.sqrt(r()),dx=Math.cos(a)*rx*rad,dy=Math.sin(a)*ry*rad,shade=9-dx*.12-dy*.36+(r()-.5)*27;const size=1.2+r()*3.3;
+  ellipse(c,x+dx+1,y+dy+1.2,size*1.15,size*.75,color(base,shade-34,.85));
+  ellipse(c,x+dx,y+dy,size,size*.64,color(base,shade,.95));
   if(r()<.57)ellipse(c,x+dx-size*.3,y+dy-size*.35,1+r()*2,.6+r()*1.4,color(base,shade+26,.7))
  }
 }
 function tree(kind,v){const o=canvas(192,240),c=o.getContext('2d'),r=rng(911+v*9283+kind.length*3247),x=93,y=211;shadow(c,109,211,72,18);
- const base=kind==='pine'?[46,70,44]:kind==='autumn'?[128,98,49]:[67,91,45];
+ const base=kind==='pine'?[35,59,40]:kind==='autumn'?[113,83,42]:[53,77,40];
  if(kind==='dead'){trunk(c,r,x,y,45,13);for(const [a,b,d,e,w] of [[93,131,39,73,10],[91,101,55,42,8],[93,115,142,57,11],[92,75,113,26,6],[39,73,25,44,4],[142,57,166,46,4],[55,42,62,17,4]])branch(c,a,b,d,e,w);return o}
  trunk(c,r,x,y,65,kind==='pine'?8:13);
  if(kind==='pine'){
-  for(let i=0;i<7;i++){const cy=154-i*21,rx=65-i*7;poly(c,[[x-rx,cy+10],[x-11,cy-54],[x+5,cy-61],[x+rx,cy+12],[x+20,cy+26]],color(base,-10+i*2));crown(c,r,x,cy,rx*.90,15,base,58);for(let j=0;j<15;j++){let xx=x+(r()-.5)*rx*1.7,yy=cy-12+r()*26;line(c,xx,yy,xx+(xx<x?-1:1)*(3+r()*5),yy+3,color(base,31,.64),.7)}}
+  for(let i=0;i<7;i++){const cy=154-i*21,rx=65-i*7;poly(c,[[x-rx,cy+10],[x-11,cy-54],[x+5,cy-61],[x+rx,cy+12],[x+20,cy+26]],color(base,-10+i*2));crown(c,r,x,cy,rx*.90,15,base,190);for(let j=0;j<15;j++){let xx=x+(r()-.5)*rx*1.7,yy=cy-12+r()*26;line(c,xx,yy,xx+(xx<x?-1:1)*(3+r()*5),yy+3,color(base,31,.64),.7)}}
  }else{
   branch(c,x,147,49,87,10);branch(c,x,132,139,72,11);branch(c,x,115,90,40,9);
   const masses=[[91,115,63,32],[48,96,34,29],[140,100,36,31],[104,71,50,38],[61,60,38,32],[119,45,37,27],[86,35,30,23]];
-  for(let i=0;i<masses.length;i++){let [a,b,rx,ry]=masses[i];a+=(r()-.5)*12;b+=(r()-.5)*13;ellipse(c,a,b,rx,ry,color(base,-21));crown(c,r,a,b,rx,ry,base,100)}
+  for(let i=0;i<masses.length;i++){let [a,b,rx,ry]=masses[i];a+=(r()-.5)*12;b+=(r()-.5)*13;ellipse(c,a,b,rx,ry,color(base,-31));crown(c,r,a,b,rx,ry,base,300)}
  }
  return o
 }
