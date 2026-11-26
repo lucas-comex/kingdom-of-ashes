@@ -143,3 +143,8 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - Impactos de combate com partículas limitadas (12 eventos, 240 ms), destaque de crítico e cor elemental, desligados em qualidade reduzida. Indicador de alvo na área de jogo e HUD, barras maiores de chefes e aviso de preparação de ataque.
 - Menu compacto opcional e persistente, atalhos essenciais sempre visíveis, botões de saque acessíveis por teclado, contraste e feedback visual de equipamentos. Corrige minimapa dos esgotos e atualização de mapa por masmorra.
 - Preserva atributos, combate, saves e conteúdo. Testes de menu e ciclo dos impactos; inspeção visual e FPS no dispositivo ainda pendentes. Nenhuma infraestrutura online adicionada.
+
+## 19.5–21.0 — Beta local e fundação de lançamento
+- 19.5: cópia anterior do save, recuperação de JSON inválido, exportação manual de backup e limites básicos de valores. Testes de recuperação; não é revisão integral de balanceamento.
+- 20.0: servidor HTTP exclusivamente loopback de desenvolvimento, cadastro/login com scrypt, sessão HttpOnly, proteção de origem e backup isolado por conta; página local de conta. Não publicado e não multiplayer autoritativo.
+- 21.0: quatro trajes gratuitos de teste por nível, seleção persistente, opção de ocultar/remover a skin sem alterar atributos. Variações do atlas existente; pagamentos e loja real desativados. Guia BETA-21.md e testes de autenticação, isolamento, backup e invariância de atributos. Publicação beta depende dos testes.
