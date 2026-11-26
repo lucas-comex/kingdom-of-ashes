@@ -1,0 +1,27 @@
+/* Classic Reborn: weathered iron, dark stone, crimson and cobalt. Original interface, not copied UI assets. */
+:root{--iron:#241e1a;--edge:#7f6849;--gold:#d1ad71;--panel:#151412}
+body{background:#100e0d;color:#d7c7a8}body>header{background:linear-gradient(180deg,#29211c,#100d0c);border-bottom:2px solid #77613f}body>header h1{font-family:Georgia,serif;letter-spacing:3px;color:#ddbb81;text-shadow:0 2px 4px #000}
+#stage{grid-template-columns:minmax(0,1fr) 220px;gap:5px;padding:4px;background:#100f0d}
+#viewport{height:max(330px,calc(100dvh - 215px));border:0;outline:1px solid #67543b;outline-offset:-1px;box-shadow:inset 0 0 14px #000}
+#viewport:after{box-shadow:inset 0 0 70px #0c0a0750;pointer-events:none}
+#side{background:repeating-linear-gradient(135deg,#211b17 0,#1b1714 3px,#1b1714 7px);border:2px ridge #796342}
+.dock{background:linear-gradient(145deg,#231e19,#100e0c);border:1px solid #79603d;box-shadow:inset 0 0 12px #000a;padding:5px}
+.dock h2,.rpgpanel header{background:linear-gradient(#53412c,#231b14);color:#e6c78c;font:700 11px Georgia,serif;text-align:center;letter-spacing:1.2px;border:1px solid #a98a55;box-shadow:inset 0 1px #c5a77844}
+.koa-avatar{background:radial-gradient(ellipse at 25% 50%,#51422e,#15110e 70%);border-color:#84653e}.koa-avatar canvas{width:68px;height:68px}
+#sideGear .equipCell{background:radial-gradient(ellipse at 50% 20%,#4b3926,#17120e 80%);border:1px solid #876c43;box-shadow:inset 0 0 8px #000b;min-height:46px}#sideGear .equipCell .itemIcon{width:27px;height:27px}#sideGear .equipCell small{color:#dfc18b}
+#sideMap svg{max-width:154px;border:2px ridge #9c8355;background:#141d16}
+#hud{background:linear-gradient(180deg,#241a15,#100d0c 55%,#292018);border:2px ridge #9b7d4e;padding:4px 9px;box-shadow:inset 0 1px 6px #000}
+#hudIdentity{font:11px Georgia,serif;color:#e1bd82}#bars .meter{height:12px;background:#100d0a}#bars .meter:nth-child(-n+2){display:none}
+#classicCombat{display:grid;grid-template-columns:83px minmax(0,1fr) 83px;gap:8px;align-items:center;max-width:1100px;margin:auto}
+.koa-orb{width:77px;height:77px;position:relative;isolation:isolate;overflow:hidden;border-radius:50%;border:3px ridge #ad8955;background:radial-gradient(ellipse at 35% 25%,#483127,#170e0d 70%);box-shadow:0 2px 4px #000,inset 0 0 14px #000;--fill:100%;color:#fff2da}
+.koa-orb .orbLiquid{position:absolute;inset:auto 0 0;height:var(--fill);background:radial-gradient(ellipse at 42% 22%,#ee6750,#a71e20 45%,#440808 90%);transition:height .18s linear}
+.koa-orb.mana .orbLiquid{background:radial-gradient(ellipse at 42% 22%,#81bdff,#285ebc 45%,#0b1746 90%)}
+.koa-orb .orbGlint{position:absolute;inset:0;border-radius:50%;background:radial-gradient(ellipse at 35% 20%,#fff4d755,transparent 32%);box-shadow:inset 0 0 12px #0008}
+.koa-orb b,.koa-orb small{position:absolute;left:0;right:0;text-align:center;text-shadow:0 1px 3px #000,0 0 3px #000}.koa-orb b{top:28px;font:700 11px Georgia,serif}.koa-orb small{top:43px;font:9px Georgia,serif;letter-spacing:1px}
+.classicActions{min-width:0}.quickCompact{justify-content:center}.quickCompact .quickHeading{max-width:65px}#quickSlots{justify-content:center}#quickSlots .quickSlot{min-width:38px;min-height:45px;max-width:55px;background:radial-gradient(ellipse at 50% 15%,#58412b,#17120e 75%);border:2px ridge #8f6d3f;box-shadow:inset 0 0 5px #000}#quickSlots .quickSlot .itemIcon{width:23px;height:23px}
+#vocationBar{justify-content:center}#vocationBar button,#tools button,.dockButton,.rpgpanel button{background:linear-gradient(#493523,#1a130e);border-color:#8d6c42;color:#e4c58a;text-shadow:0 1px #000}#tools{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;padding:2px 0}#tools button{flex:none;white-space:nowrap;font-size:10px}
+.rpgpanel{background:linear-gradient(120deg,#302218,#15110e 76%);border:2px ridge #ad8855;box-shadow:0 8px 26px #000d}.rpgpanel .slot{background:radial-gradient(ellipse at 50% 20%,#4e3924,#18120d);border-color:#8b6d42}.rpgpanel .panelbody{color:#decaab}
+#worldClock{transform:scale(.72);opacity:.88}
+@media(max-width:780px){#stage{grid-template-columns:1fr}#viewport{height:auto;aspect-ratio:16/9;min-height:230px}#classicCombat{grid-template-columns:54px minmax(0,1fr) 54px;gap:3px}.koa-orb{width:52px;height:52px}.koa-orb b{top:16px;font-size:9px}.koa-orb small{top:29px;font-size:8px}#quickSlots{justify-content:flex-start}#sideScroll{max-height:180px}}
+
+#bars{grid-template-columns:repeat(3,minmax(0,1fr))}
