@@ -1,6 +1,6 @@
 /* 17.0 — offline expansion. All mutations go through the live World instance. */
 (()=>{'use strict';
-const towns=[[15,15,'Castelo de Ashes'],[36,38,'Vale de Thorn'],[62,15,'Valemor'],[22,62,'Bosque de Eldren'],[64,62,'Terras Cinzentas'],[96,38,'Vila de Ravenhold'],[128,62,'Fortaleza de Vargard'],[36,96,'Porto de Brumafria'],[96,128,'Vila de Eldoria'],[148,148,'Fronteira do Norte']];
+const towns=[[15,15,'Castelo de Ashes'],[36,38,'Vale de Thorn'],[62,15,'Valemor'],[22,62,'Bosque de Eldren'],[64,62,'Terras Cinzentas'],[96,38,'Vila de Ravenhold'],[128,62,'Fortaleza de Vargard'],[36,96,'Porto de Brumafria'],[96,128,'Vila de Eldoria'],[148,148,'Fronteira do Norte'],...window.KOAMounts.towns];
 const quests=[
  ['q1','A primeira caçada','Caçador de Ashes','Elimine 3 lobos.','kill:lobo',3,1,[],40,100,'trainingSword'],
  ['q2','Remédios para o reino','Mira','Reúna 6 ervas medicinais.','gather:herbs',6,1,[],35,90],
