@@ -38,6 +38,25 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
    await page.locator('[data-kind=skills] .skillrow').first().waitFor();
    assert.equal(await page.evaluate(()=>window.koaSave()),true);
    if(mode==='preview'){await page.locator('#tools [data-panel=hotkeys]').click();await page.locator('[data-hotkey="0"]').selectOption('I');await page.locator('[data-hotkey="0"]').evaluate(el=>el.blur());await page.keyboard.press('1');await page.locator('[data-kind=bag] .slot').first().waitFor();assert.equal(await page.evaluate(()=>window.KOA15.direction(1,-1)),'northeast');assert.ok(await page.locator('#quickSlots button').count()===9);assert.ok(await page.evaluate(()=>localStorage.getItem('koa-preview-save-v1')&&!localStorage.getItem('koa-save-v1')));}
+   if(mode==='preview'){
+    const bag=page.locator('[data-kind=bag]');
+    if(!(await bag.count()))await page.locator('#tools [data-panel=bag]').click();
+    await bag.locator('[data-drag-item=meat]').waitFor();
+    const before=await page.evaluate(()=>window.koaStats.meat);
+    if(before>1){
+     await bag.locator('[data-drop=meat][data-count=ask]').click();
+     await page.locator('#dropQuantity').fill('1');
+     await page.locator('#dropConfirm').click();
+     await page.waitForFunction(n=>window.koaStats.meat===n-1,before);
+     await page.locator('#tools [data-panel=ground]').click();
+     await page.locator('[data-kind=ground] [data-pickup]').first().click();
+     await page.waitForFunction(n=>window.koaStats.meat===n,before);
+    }
+    await page.locator('#tools [data-panel=character]').click();
+    await page.locator('[data-kind=character] .groundRow').first().waitFor();
+    await page.evaluate(()=>window.KOAInventory.move('meat','gold'));
+    assert.equal(await page.evaluate(()=>window.KOAInventory.order[0]),'meat');
+   }
    await page.screenshot({path:'artifacts/'+mode+'.png'});
    assert.deepEqual(errors,[],mode+': browser runtime errors');
    console.log(mode,'PASS',start,end);
