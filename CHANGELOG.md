@@ -100,3 +100,9 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - Forja com braseiro e bigorna; padaria com forno e pães; herbalista com prateleira; estalagem com barris. Móveis nos mesmos pontos já bloqueados; tapetes detalhados. Iluminação quente em interiores/entardecer, verde úmida em esgotos e quente sombria na cripta.
 - Cache de materiais do terreno com halo por chunk para reduzir consultas repetidas; culling de cenário acompanha largura da câmera. Modo econômico omite flores/cogumelos.
 - Testes de distinção das artes e presença dos pisos no navegador. Arte procedural rasterizada continua experimental, sem novas direções pintadas ou montanhas navegáveis; FPS real não medido. Nenhuma alteração em conta, multiplayer, economia ou saves.
+
+## 17.6–17.8 — Criaturas, interface e desempenho
+- Seis famílias de masmorra com sprites próprios (rato, ratazana, cobra, esqueleto, cavaleiro e rei), poses direcionais em cache; Rei Sepultado com coroa/capa, Guardião com acabamento distinto. Arte procedural rasterizada, não atlas pintado final.
+- Filtros por categoria e ordenação por nome/raridade na mochila, comparação de bônus de aprimoramento, progresso visual no bestiário, resumo de saque e botão de recolher tudo fixo.
+- Orçamento adaptativo de efeitos: após duas amostras abaixo de 38 FPS reduz frequência de animações/efeitos e desliga reflexos; após três acima de 53 FPS restaura. Modo econômico/qualidade baixa mantêm redução. Configuração desativável. Não altera passo de simulação, dano ou XP. Diagnóstico registra estado e quantidade de texturas.
+- Testes de seis silhuetas/animações, cache e filtros; validação pendente. Sem metas de FPS comprovadas, arte de oito direções pintadas ou reconstrução integral concluída. Sem alterações de conta, rede ou salvamentos de personagem.

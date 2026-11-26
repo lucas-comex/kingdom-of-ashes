@@ -10,7 +10,7 @@ const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
 let order=read('koa-preview-bag-order',IDS);if(!Array.isArray(order))order=IDS;order=[...new Set([...order.filter(k=>IDS.includes(k)),...IDS])];
 let layouts=read('koa-preview-panel-layout',{});if(!layouts||typeof layouts!=='object'||Array.isArray(layouts))layouts={};
 let drag=null,stats=null,refresh=null;
-const comparison=(s,id)=>{const v=s.relicCatalog[id];if(!v)return '';const old=s.relicCatalog[s.relicEquipped[v.slot]]||{};return ['attack','defense','crit'].map((k,i)=>{const d=(v[k]||0)-(old[k]||0),n=i?Math.round(d*100):d;return ['ATQ','DEF','CRIT'][i]+': '+(n>0?'+':'')+n+(i?'%':'')}).join(' · ')};
+const comparison=(s,id)=>{const v=s.relicCatalog[id];if(!v)return '';const oldId=s.relicEquipped[v.slot],old=s.relicCatalog[oldId]||{};const rank=k=>s.expansion?.upgrades[k]||0;const stat=(item,k,r)=> (item[k]||0)+(item[k]>0?(k==='attack'?r*2:k==='defense'?r*.012:0):0);return ['attack','defense','crit'].map((k,i)=>{const d=stat(v,k,rank(id))-stat(old,k,rank(oldId)),n=i?Math.round(d*100):d;return ['ATQ','DEF','CRIT'][i]+': '+(n>0?'+':'')+n+(i?'%':'')}).join(' · ')};
 function move(id,before){if(!IDS.includes(id)||!IDS.includes(before)||id===before)return false;const a=order.indexOf(id),b=order.indexOf(before);[order[a],order[b]]=[order[b],order[a]];write('koa-preview-bag-order',order);refresh?.();return true}
 function sort(){order=IDS.slice();write('koa-preview-bag-order',order);refresh?.()}
 function count(id){if(!stats)return 0;if(IDS.includes(id))return Math.max(0,Math.floor(stats[id]||0));if(id.startsWith('relic:'))return Number(stats.relicBag.includes(id.slice(6)));if(id.startsWith('gear:'))return Number(!!(stats[id.slice(5)]||stats.storedGear?.[id.slice(5)]));return 0}
