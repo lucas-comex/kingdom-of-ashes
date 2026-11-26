@@ -150,3 +150,8 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - 21.0: quatro trajes gratuitos de teste por nível, seleção persistente, opção de ocultar/remover a skin sem alterar atributos. Variações do atlas existente; pagamentos e loja real desativados. Guia BETA-21.md e testes de autenticação, isolamento, backup e invariância de atributos. Publicação beta depende dos testes.
 
 - 21.0 revisão: importação de backup JSON com validação de formato e posição, confirmação explícita e bloqueio do autosave durante a recarga; link de contas somente quando o servidor local responde. Teste de restauração em armazenamento simulado.
+
+## 22.0 — Classic Reborn (reconstrução visual experimental)
+- Importação de arte pré-renderizada FLARE com CC BY-SA 3.0 e atribuição, origem fixada por commit. Terrenos, árvores, objetos naturais, materiais de alvenaria e pisos/paredes de masmorras substituídos por atlas importado. Construções mantêm geometria e portas existentes; paredes e telhados recebem materiais reais.
+- Personagens masculinos/femininos com oito vistas e camadas independentes de roupa, armadura, pernas, botas, capacete e armas, com quadros de origem comum; evita recortes de ícone posicionados à mão. Personalização de cores aproximada; estilos de cabelo existentes não são todos representados na nova arte. Fallback legado via ?classic=0. Não são os arquivos proprietários de Age II, Diablo II ou Tibia.
+- HUD redesenhado: orbes de vida/mana, barra central, moldura de ferro e painel de inventário lateral. Sem alterações de conteúdo ou progressão. Importação e teste visual ainda pendentes; não publicar antes de ativos presentes e testes aprovados.
