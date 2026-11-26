@@ -66,6 +66,18 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
     await page.locator('[data-kind=character] .groundRow').first().waitFor();
     await page.evaluate(()=>window.KOAInventory.move('meat','gold'));
     assert.equal(await page.evaluate(()=>window.KOAInventory.order[0]),'meat');
+    // Route through the tavern door, walk out and verify local item persistence.
+    await page.evaluate(()=>window.koaTravel(13,13));
+    await page.waitForFunction(()=>window.koaStats?.interior===0,null,{timeout:20000});
+    assert.equal(await page.evaluate(()=>window.koaStats.interiorName),'Taverna do Corvo');
+    assert.equal(await page.evaluate(()=>window.koaStats.nearby.length),0);
+    await page.waitForTimeout(600);
+    await page.keyboard.down('s');
+    await page.waitForFunction(()=>window.koaStats?.interior===null,null,{timeout:10000});
+    await page.keyboard.up('s');
+    assert.equal(await page.evaluate(()=>window.koaSave()),true);
+    console.log('interior entry/exit PASS');
+
    }
    if(mode==='eco'){assert.equal(await page.evaluate(()=>window.koaEco),true);assert.equal(await page.evaluate(()=>window.koaPerf.frameLimit),30);assert.equal(await page.evaluate(()=>document.documentElement.dataset.eco),'yes')}
    await page.screenshot({path:'artifacts/'+mode+'.png'});
