@@ -29,6 +29,8 @@ var playing: bool = false
 var step_from := Vector2(START)
 var step_to := Vector2(START)
 var step_elapsed: float = WALK_SECONDS
+var step_duration: float = WALK_SECONDS
+var urban_count: int = 0
 var attack_requested: bool = false
 var loot_gold: int = 0
 var xp: int = 0
@@ -83,6 +85,7 @@ func _ready() -> void:
 	for y in range(64):
 		for x in range(64):
 			grid.set_point_solid(Vector2i(x,y), int(map.walk[y][x]) != 1)
+	build_urban_extension()
 	hero = Actor.new()
 	hero.frames = read_json("res://assets/hero_frames.json")
 	for key in hero.frames:
@@ -124,6 +127,40 @@ func _ready() -> void:
 		call_deferred("smoke")
 	elif "--capture" in OS.get_cmdline_user_args():
 		call_deferred("capture")
+
+func build_urban_extension() -> void:
+	var atlas := image("res://assets/kingdom-art-v1.webp")
+	if atlas == null:
+		return
+	var lots := [
+		[Vector2i(19,43),Rect2(516,1313,248,190),154.0],
+		[Vector2i(23,43),Rect2(772,1302,248,211),150.0],
+		[Vector2i(33,43),Rect2(1028,1314,248,188),132.0]
+	]
+	for lot in lots:
+		var cell_pos: Vector2i = lot[0]
+		var footprint: Array[Vector2i] = [cell_pos,cell_pos+Vector2i(-1,0),cell_pos+Vector2i(0,-1),cell_pos+Vector2i(-1,-1)]
+		var clear := true
+		for point in footprint:
+			if not valid(point):
+				clear = false
+		if not clear:
+			continue
+		var art := AtlasTexture.new()
+		art.atlas = atlas
+		art.region = lot[1]
+		art.filter_clip = true
+		var spr := Sprite2D.new()
+		spr.texture = art
+		spr.centered = false
+		spr.offset = Vector2(-art.get_width()/2.0,-art.get_height())
+		spr.position = iso(Vector2(cell_pos))
+		var ratio: float = float(lot[2])/art.get_width()
+		spr.scale = Vector2.ONE*ratio
+		ordered.add_child(spr)
+		for point in footprint:
+			grid.set_point_solid(point,true)
+		urban_count += 1
 
 func valid(p: Vector2i) -> bool:
 	return grid.is_in_boundsv(p) and not grid.is_point_solid(p)
@@ -172,7 +209,7 @@ func can_step(from: Vector2i, to: Vector2i) -> bool:
 	return valid(to) and (d.x == 0 or d.y == 0 or (valid(from + Vector2i(d.x,0)) and valid(from + Vector2i(0,d.y))))
 
 func move_input(screen: Vector2, dt: float) -> bool:
-	if step_elapsed >= WALK_SECONDS:
+	if step_elapsed >= step_duration:
 		if screen.length_squared() <= 0.0:
 			return false
 		var d := Vector2i(signi(roundi(screen.x+screen.y)),signi(roundi(-screen.x+screen.y)))
@@ -181,10 +218,11 @@ func move_input(screen: Vector2, dt: float) -> bool:
 			return false
 		step_from = Vector2(from)
 		step_to = Vector2(from+d)
+		step_duration = WALK_SECONDS * Vector2(d).length()
 		step_elapsed = 0.0
 		hero.face(iso(step_to)-iso(step_from))
-	step_elapsed = minf(WALK_SECONDS,step_elapsed+dt)
-	pos = step_from.lerp(step_to,step_elapsed/WALK_SECONDS)
+	step_elapsed = minf(step_duration,step_elapsed+dt)
+	pos = step_from.lerp(step_to,step_elapsed/step_duration)
 	return true
 
 func collect_loot() -> void:
@@ -297,6 +335,8 @@ func _physics_process(dt: float) -> void:
 		elif enemy.hp > 0:
 			message = "Aproxime-se do inimigo."
 	hero.animate("swing" if attack_time>0 else ("run" if moving else "stance"),dt)
+	if moving and attack_time<=0:
+		hero.sync_walk(step_elapsed/step_duration)
 	hero.position=iso(pos)
 	if enemy.hp>0:
 		var old: Vector2 = enemy_pos
@@ -332,6 +372,7 @@ func _physics_process(dt: float) -> void:
 		pos=Vector2(START)
 		step_from=pos
 		step_to=pos
+		step_duration=WALK_SECONDS
 		step_elapsed=WALK_SECONDS
 		route.clear()
 		target=false
@@ -344,6 +385,10 @@ func smoke() -> void:
 	assert(valid(START) and valid(HUNT))
 	assert(path(START,HUNT).size()>0)
 	assert(map.objects.size()>300)
+	assert(urban_count==3)
+	assert(not valid(Vector2i(19,43)))
+	assert(valid(Vector2i(24,38)))
+	assert(path(START,HUNT).size()>0)
 	assert(hero.textures.size()==28)
 	assert(enemy.textures.has("goblin"))
 	var previous: int=gold

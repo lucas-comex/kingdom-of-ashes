@@ -34,6 +34,12 @@ func animate(next_state: String, dt: float) -> void:
 		frame = new_frame
 	queue_redraw()
 
+func sync_walk(progress: float) -> void:
+	var next_frame: int = clampi(int(progress*4.0),0,3)
+	if frame != next_frame:
+		frame = next_frame
+		queue_redraw()
+
 func layer(name: String) -> void:
 	var key: String = gender + "-" + name
 	var rows: Array = frames[key].get(state, frames[key]["stance"])
@@ -42,6 +48,11 @@ func layer(name: String) -> void:
 		draw_texture_rect_region(textures[key], Rect2(-48, -82, 96, 96), Rect2(direction * 96, int(row[0]) * 96, 96, 96))
 
 func _draw() -> void:
+	if hp > 0:
+		draw_set_transform(Vector2.ZERO,0.0,Vector2(1.0,.28))
+		draw_circle(Vector2.ZERO,17.0,Color(0.04,0.045,0.03,.23))
+		draw_circle(Vector2.ZERO,11.0,Color(0.04,0.045,0.03,.20))
+		draw_set_transform(Vector2.ZERO)
 	if kind == "hero":
 		if textures.is_empty():
 			return

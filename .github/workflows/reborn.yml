@@ -54,6 +54,15 @@ jobs:
         with:
           name: Kingdom-of-Ashes-Reborn
           path: artifacts/
+      - name: Store validated browser build on Godot branch
+        run: |
+          mkdir -p web-build
+          touch web-build/.gdignore
+          cp -a artifacts/web/. web-build/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web-build
+          if ! git diff --cached --quiet; then git commit -m "Store validated Godot browser build"; git push origin HEAD:godot-reborn; fi
       - name: Commit validated assets
         run: |
           git config user.name "github-actions[bot]"

@@ -39,7 +39,7 @@ func build(w) -> void:
 	root.add_child(top)
 	top.position=Vector2(16,16)
 	top.add_theme_stylebox_override("panel",panel_style())
-	var title:=make_label("KINGDOM OF ASHES  /  REBORN",18)
+	var title:=make_label("KINGDOM OF ASHES  /  REBORN 0.3",18)
 	top.add_child(title)
 	var side:=PanelContainer.new()
 	root.add_child(side)
