@@ -7,11 +7,14 @@ function fit(name,w,h,ax=w/2,ay=h,maxW=w,maxH=h){if(!image||!data[name])return n
 const alias={blade:'sword',potion:'potions',herb:'herbs',wand:'staff',coins:'gold'};
 function url(name){if(!image||!data[name])return null;const k='url:'+name;if(!cache.has(k)){const cv=fit(name,128,128,64,124,120,120);cache.set(k,cv.toDataURL('image/png'))}return cache.get(k)}
 const iconURL=k=>url('items/'+(alias[k]||k));
+const ground=k=>fit('items/'+(alias[k]||k),48,48,24,43,39,39);
+const furniture=k=>{const n={barrels:'barrel',crates:'crate',rubble:'rock',grave:'grave',lamp:'lamp'}[k];return n?fit('environment/'+n,128,128,64,112,104,106):null};
+const campfire=()=>fit('environment/campfire',96,96,48,82,88,79);
 const building=k=>({house:'house',tavern:'tavern',inn:'tavern',smith:'smith',temple:'chapel'}[k]);
 function buildingCanvas(k){const n=building(k);return n?fit('environment/'+n,360,380,180,350,340,330):null}
 function tree(k){return fit('environment/'+({autumn:'oak'}[k]||k),192,240,93,211,k==='pine'?130:185,211)}
 function detail(k){const n={rock:'rock',shrub:'shrub',bush:'shrub'}[k];return n?fit('environment/'+n,112,92,56,75,105,71):null}
 function portrait(v){return url('characters/'+({warrior:'warrior',archer:'archer',sorcerer:'mage',druid:'druid'}[v]||'warrior'))}
 function creature(k){return url('monsters/'+({lobo:'wolf',boar:'boar',bear:'bear',esqueleto:'skeleton',rei:'undead-king',cavaleiro:'undead-king',rato:'rat',ratazana:'rat'}[k]||k))}
-window.KOACustomArt={preload,activate,fit,iconURL,portrait,creature,buildingCanvas,tree,detail,get ready(){return !!image},count:Object.keys(data).length};
+window.KOACustomArt={preload,activate,fit,iconURL,portrait,creature,buildingCanvas,tree,detail,ground,furniture,campfire,get ready(){return !!image},count:Object.keys(data).length};
 })();
