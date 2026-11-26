@@ -9,3 +9,5 @@ GitHub Actions imports, smoke-tests, captures a screenshot and exports the Web b
 0.4: ten atlas-based new buildings, 13 named residents, dialogue and explicit merchant purchase. All new building entrances have a tested route from spawn. A custom monumental castle asset is still pending.
 
 0.5: provisional capital district adapted from the CC BY-SA FLARE Black Oak City map, safe spawn without gear/items, commerce, two connected zones, culling, HUD throttling, fixed 960x600 internal resolution. Castle-specific original art and complete inventory are pending. F at west gate of capital or travel post of outpost changes zone.
+
+0.5.1: explicit eight-way mapping, arrows and keypad 7/9/1/3 as backup; no diagonal wall clipping, safe fallback, leftover physics time retained. Smoke tests all eight directions on both maps.

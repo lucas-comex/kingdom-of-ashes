@@ -38,8 +38,10 @@ func animate(next_state: String, dt: float) -> void:
 		queue_redraw()
 
 func sync_walk(progress: float) -> void:
+	var changed: bool = state != "run"
+	state="run"
 	var next_frame: int = clampi(int(progress*4.0),0,3)
-	if frame != next_frame:
+	if frame != next_frame or changed:
 		frame = next_frame
 		queue_redraw()
 

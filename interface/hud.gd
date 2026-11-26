@@ -46,7 +46,7 @@ func build(w) -> void:
 	root.add_child(top)
 	top.position=Vector2(16,16)
 	top.add_theme_stylebox_override("panel",panel_style())
-	var title:=make_label("KINGDOM OF ASHES  /  REBORN 0.5",18)
+	var title:=make_label("KINGDOM OF ASHES  /  REBORN 0.5.1",18)
 	top.add_child(title)
 	var side:=PanelContainer.new()
 	root.add_child(side)
@@ -114,7 +114,7 @@ func build(w) -> void:
 	status.custom_minimum_size=Vector2(220,20)
 	status.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	box.add_child(status)
-	var help:=make_label("WASD • Espaço: atacar • F: interagir • I: mochila • J: poção • Scroll: zoom",12)
+	var help:=make_label("WASD/setas • Espaço: atacar • F: interagir • I: mochila • J: poção • Scroll: zoom",12)
 	box.add_child(help)
 	bag=PanelContainer.new()
 	root.add_child(bag)

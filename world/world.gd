@@ -182,7 +182,8 @@ func load_area(next_area: String) -> void:
 	if is_instance_valid(hud):
 		hud.set_area(folder+"/minimap.webp")
 	cam.position=hero.position+Vector2(0,-28)
-	cam.reset_smoothing()
+	if cam.is_inside_tree():
+		cam.reset_smoothing()
 	cull_objects()
 	message="Bem-vindo à capital. F no portão oeste leva à região de caça." if area=="capital" else "F junto ao posto de viagem retorna à capital."
 
@@ -282,22 +283,57 @@ func can_step(from: Vector2i, to: Vector2i) -> bool:
 	var d := to - from
 	return valid(to) and (d.x == 0 or d.y == 0 or (valid(from + Vector2i(d.x,0)) and valid(from + Vector2i(0,d.y))))
 
+func read_movement() -> Vector2:
+	var left: bool = Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)
+	var right: bool = Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)
+	var up: bool = Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP)
+	var down: bool = Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)
+	var screen := Vector2(float(right)-float(left),float(down)-float(up))
+	if screen==Vector2.ZERO:
+		if Input.is_physical_key_pressed(KEY_KP_7): return Vector2(-1,-1)
+		if Input.is_physical_key_pressed(KEY_KP_9): return Vector2(1,-1)
+		if Input.is_physical_key_pressed(KEY_KP_1): return Vector2(-1,1)
+		if Input.is_physical_key_pressed(KEY_KP_3): return Vector2(1,1)
+	return screen
+
+func screen_step(screen: Vector2) -> Vector2i:
+	var x: int = signi(roundi(screen.x))
+	var y: int = signi(roundi(screen.y))
+	return Vector2i(signi(x+y),signi(y-x))
+
+func choose_step(from: Vector2i, screen: Vector2) -> Vector2i:
+	var direct := screen_step(screen)
+	if direct==Vector2i.ZERO:
+		return Vector2i.ZERO
+	if can_step(from,from+direct):
+		return direct
+	if screen.x!=0.0 and screen.y!=0.0:
+		for component in [Vector2(screen.x,0),Vector2(0,screen.y)]:
+			var alternative := screen_step(component)
+			if can_step(from,from+alternative):
+				return alternative
+	return Vector2i.ZERO
+
 func move_input(screen: Vector2, dt: float) -> bool:
-	if step_elapsed >= step_duration:
-		if screen.length_squared() <= 0.0:
-			return false
-		var d := Vector2i(signi(roundi(screen.x+screen.y)),signi(roundi(-screen.x+screen.y)))
-		var from := cell(pos)
-		if not can_step(from,from+d):
-			return false
-		step_from = Vector2(from)
-		step_to = Vector2(from+d)
-		step_duration = WALK_SECONDS * Vector2(d).length()
-		step_elapsed = 0.0
-		hero.face(iso(step_to)-iso(step_from))
-	step_elapsed = minf(step_duration,step_elapsed+dt)
-	pos = step_from.lerp(step_to,step_elapsed/step_duration)
-	return true
+	var remaining: float = maxf(0.0,dt)
+	var moved: bool = false
+	while remaining>0.00001:
+		if step_elapsed >= step_duration:
+			var from := cell(pos)
+			var d := choose_step(from,screen)
+			if d==Vector2i.ZERO:
+				break
+			step_from = Vector2(from)
+			step_to = Vector2(from+d)
+			step_duration = WALK_SECONDS * Vector2(d).length()
+			step_elapsed = 0.0
+			hero.face(iso(step_to)-iso(step_from))
+		var part: float = minf(remaining,step_duration-step_elapsed)
+		step_elapsed = minf(step_duration,step_elapsed+part)
+		remaining -= part
+		pos = step_from.lerp(step_to,step_elapsed/step_duration)
+		moved=true
+	return moved
 
 func collect_loot() -> void:
 	if area!="outpost" or loot_gold <= 0 or pos.distance_to(enemy_pos)>2.0:
@@ -436,7 +472,7 @@ func _physics_process(dt: float) -> void:
 		return
 	attack_time = maxf(0,attack_time-dt)
 	enemy_attack = maxf(0,enemy_attack-dt)
-	var screen := Vector2(float(Input.is_physical_key_pressed(KEY_D))-float(Input.is_physical_key_pressed(KEY_A)),float(Input.is_physical_key_pressed(KEY_S))-float(Input.is_physical_key_pressed(KEY_W)))
+	var screen := read_movement()
 	var moving := move_input(screen,dt)
 	if attack_requested:
 		attack_requested = false
@@ -447,9 +483,10 @@ func _physics_process(dt: float) -> void:
 			damage_enemy()
 		elif area=="outpost" and enemy.hp > 0:
 			message = "Aproxime-se do inimigo."
-	hero.animate("swing" if attack_time>0 else ("run" if moving else "stance"),dt)
 	if moving and attack_time<=0:
 		hero.sync_walk(step_elapsed/step_duration)
+	else:
+		hero.animate("swing" if attack_time>0 else "stance",dt)
 	hero.position=iso(pos)
 	if area=="capital":
 		pass
@@ -504,12 +541,56 @@ func _physics_process(dt: float) -> void:
 		cull_clock=0.0
 		cull_objects()
 
+func test_movement() -> void:
+	var origin := Vector2i(-1,-1)
+	for yy in range(2,62):
+		for xx in range(2,62):
+			var clear: bool = true
+			for dy in range(-1,2):
+				for dx in range(-1,2):
+					if not valid(Vector2i(xx+dx,yy+dy)):
+						clear=false
+			if clear:
+				origin=Vector2i(xx,yy)
+				break
+		if origin.x>=0:
+			break
+	assert(origin.x>=0,"No open area for movement test")
+	var directions: Array[Vector2] = [Vector2(0,-1),Vector2(1,-1),Vector2(1,0),Vector2(1,1),Vector2(0,1),Vector2(-1,1),Vector2(-1,0),Vector2(-1,-1)]
+	var expected: Array[Vector2i] = [Vector2i(-1,-1),Vector2i(0,-1),Vector2i(1,-1),Vector2i(1,0),Vector2i(1,1),Vector2i(0,1),Vector2i(-1,1),Vector2i(-1,0)]
+	for index in range(8):
+		pos=Vector2(origin)
+		step_from=pos
+		step_to=pos
+		step_duration=WALK_SECONDS
+		step_elapsed=step_duration
+		assert(screen_step(directions[index])==expected[index])
+		var seconds: float = WALK_SECONDS*Vector2(expected[index]).length()
+		assert(move_input(directions[index],seconds*.5))
+		assert(pos.distance_to(Vector2(origin)+Vector2(expected[index])*.5)<.001)
+		assert(move_input(Vector2.ZERO,seconds*.5))
+		assert(pos.distance_to(Vector2(origin+expected[index]))<.001)
+		assert(not move_input(Vector2.ZERO,.1))
+	var obstruction := origin+Vector2i(1,0)
+	grid.set_point_solid(obstruction,true)
+	assert(not can_step(origin,origin+Vector2i(1,1)))
+	assert(choose_step(origin,Vector2(0,1))==Vector2i.ZERO)
+	grid.set_point_solid(obstruction,false)
+	pos=Vector2(CAPITAL_START if area=="capital" else START)
+	step_from=pos
+	step_to=pos
+	step_duration=WALK_SECONDS
+	step_elapsed=step_duration
+	print("MOVEMENT 8 DIRECTIONS PASS: "+area)
+
 func smoke() -> void:
 	assert(area=="capital" and valid(CAPITAL_START) and not hero.equipment and not has_gear and potions==0 and gold==0)
 	assert(path(CAPITAL_START,CAPITAL_GATE).size()>0)
 	assert(path(CAPITAL_START,Vector2i(CAPITAL_MERCHANT)).size()>0)
 	assert(not enemy.visible)
+	test_movement()
 	load_area("outpost")
+	test_movement()
 	assert(valid(START) and valid(HUNT))
 	assert(path(START,HUNT).size()>0)
 	assert(map.objects.size()>300)
