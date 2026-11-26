@@ -14,10 +14,10 @@ const residents=[
 ['Iria','Peregrina','elder',['As cinzas não apagam nossa esperança.','Acenda uma vela no templo.','Que os antigos protejam seus passos.']]
 ];
 const shops={
- bakery:{name:'Padaria do Trigo',keeper:'Edric',role:'merchant',lines:['Pão quente e refeições para a estrada.','Uma refeição custa 5 moedas. Pressione F novamente para comprar.'],cost:5,item:'cooked'},
+ bakery:{name:'Padaria do Trigo',keeper:'Edric',role:'merchant',lines:['Pão quente e refeições para a estrada.','Uma refeição custa 5 moedas. Abra Comércio para confirmar a compra.'],cost:5,item:'cooked'},
  smith:{name:'Ferraria da Brasa',keeper:'Garran',role:'merchant',lines:['Bem-vindo à minha ferraria.','Espada de aço: 30 moedas. Armadura: 25. Use K/L junto ao ferreiro.']},
- herbal:{name:'Ervanária da Lua',keeper:'Mira',role:'hunter',lines:['Tenho poções para sua jornada.','Uma poção custa 12 moedas. Pressione F novamente para comprar.'],cost:12,item:'potions'},
- inn:{name:'Pousada do Peregrino',keeper:'Elena',role:'merchant',lines:['Aqui você pode descansar.','Uma noite de descanso custa 8 moedas. Pressione F novamente para recuperar vida, mana e saciedade.'],cost:8,item:'rest'}
+ herbal:{name:'Ervanária da Lua',keeper:'Mira',role:'hunter',lines:['Tenho poções para sua jornada.','Uma poção custa 12 moedas. Abra Comércio para confirmar a compra.'],cost:12,item:'potions'},
+ inn:{name:'Pousada do Peregrino',keeper:'Elena',role:'merchant',lines:['Aqui você pode descansar.','Uma noite de descanso custa 8 moedas. Use Comércio para recuperar vida, mana e saciedade.'],cost:8,item:'rest'}
 };
 // Original modal melody with lute-like plucks and sparse drone. No external audio.
 let ctx,bus,next=0,step=0,enabled=true,level=.12,active=false;

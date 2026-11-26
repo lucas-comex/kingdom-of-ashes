@@ -37,7 +37,7 @@ const available=(w,q)=>w.level>=q.level&&q.requires.every(k=>w.expansion.claimed
 const nearTown=w=>!w.inCrypt&&!w.inSewer&&w.interior===null&&towns.some(([x,y])=>Math.hypot(x-w.p.x,y-w.p.y)<5);
 const shop=w=>w.interior!==null&&w.houses[w.interior]?.shop==='smith'&&w.roomNPC&&Math.hypot(w.roomNPC.x-w.p.x,w.roomNPC.y-w.p.y)<2||w.interior===null&&!w.inCrypt&&!w.inSewer&&w.npcs.some(n=>n.name==='Mercador'&&Math.hypot(n.x-w.p.x,n.y-w.p.y)<2);
 function record(w,key,n=1){if(!w.expansion)return;w.expansion.counts[key]=Math.min(1e8,(w.expansion.counts[key]||0)+n)}
-function visit(w){if(!w.expansion||w.inCrypt||w.inSewer||w.interior!==null)return;towns.forEach(([x,y,name],i)=>{if(!w.expansion.towns.includes(i)&&Math.hypot(x-w.p.x,y-w.p.y)<4){w.expansion.towns.push(i);w.notice='Local descoberto: '+name+'. Viagem rápida desbloqueada.';w.hudTimer=2;w.xp+=35;window.koaSave?.()}})}
+function visit(w){if(!w.expansion||w.inCrypt||w.inSewer||w.interior!==null)return;towns.forEach(([x,y,name],i)=>{if(!w.expansion.towns.includes(i)&&Math.hypot(x-w.p.x,y-w.p.y)<4){w.expansion.towns.push(i);w.notice='Local descoberto: '+name+'. Viagem rápida desbloqueada.';w.hudTimer=2;w.xp+=35;w.advanceLevels();window.koaSave?.()}})}
 function result(w,msg,ok=true){w.notice=msg;w.hudTimer=2;if(ok)window.koaSave?.();return ok}
 function grant(w,id){if(!id)return;if(!w.relicBag.includes(id))w.relicBag.push(id);else w.gold+=15}
 function command(w,action,id,arg){if(!window.koaStarted||window.koaPaused||!w.expansion)return false;const e=w.expansion;const fail=msg=>result(w,msg,false);
@@ -52,5 +52,5 @@ function command(w,action,id,arg){if(!window.koaStarted||window.koaPaused||!w.ex
  return false
 }
 function snapshot(w){const e=w.expansion;return {points:points(w),talents:talents.filter(t=>t.vocation===w.vocation()).map(t=>({...t,rank:e.talents[t.id]||0})),quests:quests.map(q=>({...q,progress:Math.min(q.goal,progress(w,q)),accepted:!!e.accepted[q.id],claimed:!!e.claimed[q.id],available:available(w,q)})),recipes:recipes.map(r=>({...r,owned:w.relicBag.includes(r.id)})),market:market.map(r=>({...r,owned:w.relicBag.includes(r.id),equipped:Object.values(w.relicEquipped).includes(r.id)})),towns:towns.map(([x,y,name],i)=>({id:i,name,x,y,discovered:e.towns.includes(i)})),bank:e.bank,nearTown:nearTown(w),shop:!!shop(w),upgrades:{...e.upgrades},combat:w.combatTime>0}}
-window.KOAExpansion={fresh,clean,record,visit,command,snapshot,rank,points,quests,recipes,market,talents};
+window.KOAExpansion={shop,fresh,clean,record,visit,command,snapshot,rank,points,quests,recipes,market,talents};
 })();
