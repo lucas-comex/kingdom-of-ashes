@@ -61,6 +61,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      assert.deepEqual(improved,{full:true,heal:true,food:true,questCount:26,vocations:4});console.log('22.3 system regression PASS',improved);
      const raster=await page.evaluate(()=>Object.fromEntries(Object.entries(window.KOAMonsterRaster.data).map(([k,v])=>[k,Object.values(v.frames).every(rows=>new Set(rows.map(r=>r[1])).size===8)])));assert.deepEqual(raster,{esqueleto:true,cavaleiro:true});
      const respawn=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0];return [{},{sewer:true},{crypt:true},{elite:true},{dungeonBoss:true}].map(e=>w.respawnDelay(e))});assert.deepEqual(respawn,[35,45,75,90,180]);
+     const zoom=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],cv=w.game.canvas;cv.dispatchEvent(new WheelEvent('wheel',{deltaY:-100,cancelable:true,bubbles:true}));const up=w.viewZoom;cv.dispatchEvent(new WheelEvent('wheel',{deltaY:100,cancelable:true,bubbles:true}));const down=w.viewZoom;const min=w.setViewZoom(.01),max=w.setViewZoom(9);w.setViewZoom(1);return {up,down,min,max,reset:w.cameras.main.zoom}});assert.ok(zoom.up>1&&zoom.down<zoom.up);assert.deepEqual([zoom.min,zoom.max,zoom.reset],[.8,1.65,1]);
    }
    const expectedWorldSize=['preview','eco','level100','level1000'].includes(mode)?192:80;
     await page.waitForFunction(size=>window.koaStats?.worldSize===size,expectedWorldSize,{timeout:20000});
