@@ -202,3 +202,14 @@ Legenda: [x] requisito básico presente; [ ] pendente ou parcial (P). Multiplaye
 ## Entrega por etapa
 
 15.9 arquitetura e interiores; 16.0 personagem/equipamento; 16.1 bestiário; 16.2 mapa/biomas; 16.3 IA; 16.4 dungeons; 17.0 vocações/combate; 18.0 economia/profissões; 19.0 mundo vivo; 20.0 exploração; 21.0 continentes; 25.0 single-player; 30.0 infraestrutura multiplayer.
+
+
+## 15.9.1 — ajustes solicitados: cidade viva e visibilidade
+
+- [x] Paredes e edifícios tornam-se semitransparentes quando encobrem o personagem; colisões preservadas.
+- [x] Música medieval original suave em povoados, controle independente de volume.
+- [x] Primeira população de moradores com deslocamentos locais, profissões e diálogos rotativos; guardas patrulham e combatem.
+- [x] Padaria, ferraria, ervanária e pousada funcionais em edifícios existentes.
+- [ ] Expandir rotinas completas, conversas contextualizadas, mais estabelecimentos e habitantes.
+- [ ] 16.0–25.0: continuar desenvolvimento incremental, com testes por versão e single-player consolidado na 25.0.
+- [ ] Após 25.0: criação de conta, autenticação segura e salvamento no servidor; requer backend e banco de dados, não guardar senhas em localStorage ou GitHub Pages.
