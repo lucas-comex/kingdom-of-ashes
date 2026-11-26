@@ -23,6 +23,16 @@ var static_objects: Array[Sprite2D] = []
 var hud_clock: float = 0.0
 var cull_clock: float = 0.0
 var has_gear: bool = false
+const SPECIES = {
+	"goblin":{"name":"Goblin saqueador","hp":60,"damage":8,"gold":25,"xp":50,"respawn":35.0,"speed":1.65,"scale":1.0,"loot":"Moeda antiga"},
+	"skeleton":{"name":"Esqueleto guerreiro","hp":95,"damage":11,"gold":38,"xp":85,"respawn":45.0,"speed":1.45,"scale":1.2,"loot":"Fragmento de osso"},
+	"minotaur":{"name":"Minotauro","hp":180,"damage":18,"gold":80,"xp":160,"respawn":75.0,"speed":1.25,"scale":1.65,"loot":"Chifre de minotauro"},
+	"wyvern":{"name":"Wyvern das cinzas","hp":260,"damage":24,"gold":140,"xp":250,"respawn":100.0,"speed":1.8,"scale":1.85,"loot":"Escama de wyvern"}
+}
+var creatures: Array[Dictionary] = []
+var selected: int = -1
+var trophies: Dictionary = {}
+var bestiary: Dictionary = {}
 const ITEMS = {
 	"sword":{"name":"Espada de ferro","price":20,"attack":10,"defense":0,"icon":Rect2(1053,516,198,248)},
 	"shield":{"name":"Escudo de ferro","price":18,"attack":0,"defense":3,"icon":Rect2(40,772,175,248)},
@@ -112,15 +122,6 @@ func _ready() -> void:
 	hero.scale = Vector2(.82,.82)
 	hero.equipment = false
 	hero.gear=equipped_gear
-	enemy = Actor.new()
-	enemy.kind = "goblin"
-	enemy.frames = read_json("res://assets/imported/goblin.json")
-	enemy.textures["goblin"] = image("res://assets/imported/goblin.webp")
-	enemy.actor_label = "Goblin saqueador"
-	enemy.max_hp = 60
-	enemy.hp = 60
-	ordered.add_child(enemy)
-	enemy.position = iso(enemy_pos)
 	load_area("capital")
 	cam.position = hero.position + Vector2(0,-28)
 	cam.position_smoothing_enabled = true
@@ -146,6 +147,10 @@ func area_title() -> String:
 
 func load_area(next_area: String) -> void:
 	area = next_area
+	for creature in creatures:
+		creature["actor"].queue_free()
+	creatures.clear()
+	selected=-1
 	for node in static_objects:
 		node.queue_free()
 	static_objects.clear()
@@ -182,6 +187,7 @@ func load_area(next_area: String) -> void:
 
 	if area=="outpost":
 		build_urban_extension()
+		spawn_creatures()
 	var npcs: Dictionary = read_json("res://assets/npc_frames.json")
 	var list: Array = [["knight","Guarda Real",Vector2i(22,32)],["wandering_trader","Mercador",Vector2i(26,32)],["peasant_man1","Ferreiro",Vector2i(27,32)],["peasant_woman1","Moradora",Vector2i(28,32)],["knight","Sentinela do portão",Vector2i(8,32)],["peasant_man1","Bram, carpinteiro",Vector2i(20,32)],["peasant_woman1","Elara, herbalista",Vector2i(29,22)],["knight","Capitão Roderic",Vector2i(30,44)],["peasant_man1","Oren, padeiro",Vector2i(34,42)],["wandering_trader","Merek, viajante",Vector2i(37,24)],["peasant_woman1","Irmã Helena",Vector2i(44,30)]] if area=="capital" else [["knight","Guarda de Ashes",Vector2i(24,35)],["wandering_trader","Mercador",Vector2i(23,39)],["peasant_man1","Ferreiro",Vector2i(25,40)],["peasant_woman1","Moradora",Vector2i(20,39)],["knight","Sentinela do portão",Vector2i(24,40)],["peasant_man1","Bram, carpinteiro",Vector2i(26,41)],["peasant_woman1","Elara, herbalista",Vector2i(27,43)],["knight","Capitão Roderic",Vector2i(30,42)],["peasant_man1","Oren, padeiro",Vector2i(35,43)],["wandering_trader","Merek, viajante",Vector2i(41,43)],["peasant_woman1","Irmã Helena",Vector2i(45,44)],["peasant_man1","Tomas, lenhador",Vector2i(18,45)],["knight","Vigia do leste",Vector2i(46,48)]]
 	for info in list:
@@ -203,7 +209,6 @@ func load_area(next_area: String) -> void:
 	step_duration=WALK_SECONDS
 	step_elapsed=WALK_SECONDS
 	hero.position=iso(pos)
-	enemy.visible=area=="outpost"
 	target=false
 	route.clear()
 	mouse_walk=false
@@ -214,8 +219,6 @@ func load_area(next_area: String) -> void:
 	queue_redraw()
 	attack_requested=false
 	attack_time=0.0
-	if area=="outpost":
-		enemy.position=iso(enemy_pos)
 	if is_instance_valid(hud):
 		hud.set_area(folder+"/minimap.webp")
 	cam.position=hero.position+Vector2(0,-28)
@@ -223,6 +226,129 @@ func load_area(next_area: String) -> void:
 		cam.reset_smoothing()
 	cull_objects()
 	message="Clique esquerdo para andar. Botão direito no portão oeste para viajar." if area=="capital" else "Botão direito no posto de viagem para voltar."
+
+func spawn_creatures() -> void:
+	var sites: Array = [["goblin",Vector2i(32,38)],["goblin",Vector2i(37,41)],["skeleton",Vector2i(38,44)],["skeleton",Vector2i(44,43)],["minotaur",Vector2i(44,48)],["wyvern",Vector2i(45,52)]]
+	for site in sites:
+		var id: String = site[0]
+		var home: Vector2i = site[1]
+		if not valid(home) or path(START,home).is_empty():
+			continue
+		var stats: Dictionary = SPECIES[id]
+		var actor: Actor = Actor.new()
+		actor.kind="monster"
+		var folder: String = "res://assets/imported/" if id=="goblin" else "res://assets/creatures/"
+		actor.frames=read_json(folder+id+".json")
+		actor.textures["monster"]=image(folder+id+".webp")
+		actor.actor_label=stats["name"]
+		actor.max_hp=stats["hp"]
+		actor.hp=actor.max_hp
+		actor.scale=Vector2.ONE*float(stats["scale"])
+		actor.position=iso(Vector2(home))
+		ordered.add_child(actor)
+		var steps: Array[Vector2i]=[]
+		creatures.append({"id":id,"actor":actor,"pos":Vector2(home),"home":Vector2(home),"route":steps,"think":0.0,"attack":0.0,"respawn":0.0,"slow":0.0,"loot":false})
+
+func creature_at(click: Vector2) -> int:
+	var best: int = -1
+	var distance: float = 44.0
+	for index in range(creatures.size()):
+		var actor: Actor = creatures[index]["actor"]
+		if not actor.visible:
+			continue
+		var d: float = click.distance_to(actor.position-Vector2(0,24.0*actor.scale.x))
+		if d<distance:
+			best=index
+			distance=d
+	return best
+
+func tick_creatures(dt: float) -> void:
+	for c in creatures:
+		var actor: Actor = c["actor"]
+		var stats: Dictionary = SPECIES[c["id"]]
+		var at: Vector2 = c["pos"]
+		var home: Vector2 = c["home"]
+		var distance: float = at.distance_to(pos)
+		actor.visible=distance<18.0
+		if actor.hp<=0:
+			c["respawn"]=float(c["respawn"])-dt
+			actor.animate("die",dt)
+			if c["respawn"]<=0.0:
+				actor.hp=actor.max_hp
+				actor.animate("stance",0.0)
+				c["loot"]=false
+				c["pos"]=home
+				actor.position=iso(home)
+				actor.queue_redraw()
+			continue
+		c["attack"]=maxf(0.0,float(c["attack"])-dt)
+		c["slow"]=maxf(0.0,float(c["slow"])-dt)
+		if distance>18.0 and at.distance_to(home)<.01:
+			continue
+		var chasing: bool = distance<6.0 and pos.distance_to(home)<10.0
+		var steps: Array[Vector2i] = c["route"]
+		var attack: bool = chasing and distance<=1.4 and clear_line(at,pos)
+		if attack:
+			steps.clear()
+			actor.face(iso(pos)-iso(at))
+			if c["attack"]<=0.0:
+				c["attack"]=1.15
+				hero.hp=maxi(0,hero.hp-maxi(1,int(stats["damage"])-defense_value()))
+		else:
+			c["think"]=float(c["think"])-dt
+			if c["think"]<=0.0:
+				c["think"]=.5
+				steps=path(cell(at),cell(pos if chasing else home))
+				c["route"]=steps
+			var next: Vector2 = advance(at,steps,dt,float(stats["speed"])*(.55 if c["slow"]>0.0 else 1.0))
+			if next.distance_to(at)>.0001:
+				actor.face(iso(next)-iso(at))
+				c["pos"]=next
+				actor.position=iso(next)
+		actor.animate("swing" if attack and c["attack"]>.65 else ("run" if Vector2(c["pos"]).distance_to(at)>.0001 else "stance"),dt)
+
+func damage_creature(index: int, amount: int) -> void:
+	if index<0 or index>=creatures.size():
+		return
+	var c: Dictionary=creatures[index]
+	var actor: Actor=c["actor"]
+	if actor.hp<=0:
+		return
+	actor.hp=maxi(0,actor.hp-amount)
+	actor.queue_redraw()
+	message="%s · %d de dano" % [actor.actor_label,amount]
+	if actor.hp==0:
+		var stats: Dictionary=SPECIES[c["id"]]
+		kills+=1
+		bestiary[c["id"]]=int(bestiary.get(c["id"],0))+1
+		xp+=int(stats["xp"])
+		while xp>=level*150:
+			xp-=level*150
+			level+=1
+		c["loot"]=true
+		c["respawn"]=stats["respawn"]
+		c["route"].clear()
+		actor.animate("die",0.0)
+		if selected==index:
+			selected=-1
+			target=false
+		message=actor.actor_label+" derrotado • botão direito para saquear"
+		save_progress()
+
+func loot_creature(index: int) -> bool:
+	if index<0 or index>=creatures.size():
+		return false
+	var c: Dictionary=creatures[index]
+	if not c["loot"] or pos.distance_to(c["pos"])>2.0:
+		message="Aproxime-se do cadáver."
+		return false
+	var stats: Dictionary=SPECIES[c["id"]]
+	gold+=int(stats["gold"])
+	trophies[c["id"]]=int(trophies.get(c["id"],0))+1
+	c["loot"]=false
+	message="+%d ouro · %s" % [stats["gold"],stats["loot"]]
+	save_progress()
+	return true
 
 func cull_objects() -> void:
 	var center: Vector2 = hero.position
@@ -421,18 +547,21 @@ func cast_at(point: Vector2) -> bool:
 	if cooldowns[index]>0.0 or mana<SKILL_COST[index]:
 		aim=-1
 		return false
-	var hit: bool = false
-	if enemy.hp>0 and clear_line(pos,enemy_pos):
+	var hits: Array[int]=[]
+	for n in range(creatures.size()):
+		var c: Dictionary=creatures[n]
+		var actor: Actor=c["actor"]
+		var at: Vector2=c["pos"]
+		if actor.hp<=0 or not clear_line(pos,at):
+			continue
+		var hit: bool=false
 		match index:
-			0:
-				hit=enemy_pos.distance_to(pos)<=2.6 and d.normalized().dot((enemy_pos-pos).normalized())>=.45
-			1:
-				var segment: Vector2 = Geometry2D.get_closest_point_to_segment(enemy_pos,pos,point)
-				hit=segment.distance_to(enemy_pos)<=.70
-			2:
-				hit=enemy_pos.distance_to(point)<=1.8
-			3:
-				hit=enemy_pos.distance_to(point)<=2.5
+			0: hit=at.distance_to(pos)<=2.6 and d.normalized().dot((at-pos).normalized())>=.45
+			1: hit=Geometry2D.get_closest_point_to_segment(at,pos,point).distance_to(at)<=.70
+			2: hit=at.distance_to(point)<=1.8
+			3: hit=at.distance_to(point)<=2.5
+		if hit:
+			hits.append(n)
 	mana-=SKILL_COST[index]
 	cooldowns[index]=SKILL_CD[index]
 	hero.face(iso(point)-iso(pos))
@@ -442,11 +571,11 @@ func cast_at(point: Vector2) -> bool:
 	effect_to=iso(point)
 	effect_time=.4
 	aim=-1
-	message=SKILL_NAMES[index]+(" acertou!" if hit else " • errou o alvo.")
-	if hit:
+	message=SKILL_NAMES[index]+(" acertou!" if not hits.is_empty() else " • errou o alvo.")
+	for n in hits:
 		if index==2:
-			slow_time=3.0
-		damage_enemy([22,30,20,55][index])
+			creatures[n]["slow"]=3.0
+		damage_creature(n,[22,30,20,55][index])
 	queue_redraw()
 	return true
 
@@ -475,8 +604,8 @@ func _draw() -> void:
 			draw_line(effect_from,effect_to,tint,5.0,true)
 		else:
 			draw_arc(effect_to,46.0 if effect_kind==2 else 65.0,0.0,TAU,48,tint,4.0,true)
-	if target and enemy.hp>0 and area=="outpost":
-		draw_arc(iso(enemy_pos),19.0,0.0,TAU,36,Color("#dba85b"),2.0,true)
+	if target and selected>=0 and selected<creatures.size():
+		draw_arc(iso(creatures[selected]["pos"]),19.0,0.0,TAU,36,Color("#dba85b"),2.0,true)
 
 func advance(p: Vector2, steps: Array[Vector2i], dt: float, speed: float) -> Vector2:
 	if steps.is_empty():
@@ -501,7 +630,7 @@ func save_progress() -> bool:
 	var file := FileAccess.open(SAVE_PATH,FileAccess.WRITE)
 	if file==null:
 		return false
-	file.store_string(JSON.stringify({"version":1,"gold":gold,"xp":xp,"level":level,"kills":kills,"potions":potions,"quest_claimed":quest_claimed,"owned":owned_gear,"equipped":equipped_gear}))
+	file.store_string(JSON.stringify({"version":1,"gold":gold,"xp":xp,"level":level,"kills":kills,"potions":potions,"quest_claimed":quest_claimed,"owned":owned_gear,"equipped":equipped_gear,"bestiary":bestiary,"trophies":trophies}))
 	file.close()
 	return true
 
@@ -525,6 +654,9 @@ func restore_progress() -> void:
 				owned_gear[id]=true
 				if equipped.get(id,false)==true:
 					equipped_gear[id]=true
+	for id in SPECIES:
+		bestiary[id]=clampi(int(data.get("bestiary",{}).get(id,0)),0,999999)
+		trophies[id]=clampi(int(data.get("trophies",{}).get(id,0)),0,999999)
 	refresh_equipment()
 	message="Progresso local recuperado. Bem-vindo à capital."
 
@@ -589,13 +721,11 @@ func move_input(screen: Vector2, dt: float) -> bool:
 	return moved
 
 func collect_loot() -> void:
-	if area!="outpost" or loot_gold <= 0 or pos.distance_to(enemy_pos)>2.0:
-		message = "Aproxime-se do cadáver para saquear."
-		return
-	gold += loot_gold
-	message = "Loot recolhido: +%d ouro" % loot_gold
-	loot_gold = 0
-	save_progress()
+	for n in range(creatures.size()):
+		if creatures[n]["loot"] and pos.distance_to(creatures[n]["pos"])<=2.0:
+			loot_creature(n)
+			return
+	message="Aproxime-se do cadáver para saquear."
 
 func use_potion() -> void:
 	if potions <= 0 or hero.hp >= hero.max_hp:
@@ -612,9 +742,11 @@ func interact() -> void:
 	if area=="outpost" and pos.distance_to(Vector2(OUTPOST_GATE))<=2.0:
 		load_area("capital")
 		return
-	if area=="outpost" and loot_gold > 0 and pos.distance_to(enemy_pos)<=2.0:
-		collect_loot()
-	elif pos.distance_to(merchant_cell())<=2.5:
+	for n in range(creatures.size()):
+		if creatures[n]["loot"] and pos.distance_to(creatures[n]["pos"])<=2.0:
+			loot_creature(n)
+			return
+	if pos.distance_to(merchant_cell())<=2.5:
 		if kills >= 3 and not quest_claimed:
 			quest_claimed = true
 			gold += 100
@@ -665,12 +797,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			MOUSE_BUTTON_WHEEL_DOWN:
 				cam.zoom = Vector2.ONE * maxf(.8,cam.zoom.x-.1)
 			MOUSE_BUTTON_LEFT:
-				var enemy_clicked: bool = area=="outpost" and click.distance_to(enemy.position-Vector2(0,24))<36.0
+				var clicked_enemy: int = creature_at(click)
 				if aim>=0:
-					cast_at(enemy_pos if enemy_clicked and enemy.hp>0 else uniso(click))
-				elif enemy_clicked:
+					cast_at(creatures[clicked_enemy]["pos"] if clicked_enemy>=0 else uniso(click))
+				elif clicked_enemy>=0:
 					stop_route()
-					target=enemy.hp>0
+					selected=clicked_enemy
+					var actor: Actor=creatures[selected]["actor"]
+					target=actor.hp>0
 					message="Alvo selecionado. Espaço ou QWER para atacar." if target else "Botão direito para saquear."
 				else:
 					target=false
@@ -685,8 +819,9 @@ func _unhandled_input(event: InputEvent) -> void:
 					return
 				stop_route()
 				var clicked_cell := uniso(click)
-				if area=="outpost" and enemy.hp<=0 and click.distance_to(enemy.position-Vector2(0,12))<40.0:
-					collect_loot()
+				var corpse: int=creature_at(click)
+				if corpse>=0 and creatures[corpse]["loot"]:
+					loot_creature(corpse)
 				elif clicked_cell.distance_to(Vector2(CAPITAL_GATE if area=="capital" else OUTPOST_GATE))<=2.0:
 					if pos.distance_to(Vector2(CAPITAL_GATE if area=="capital" else OUTPOST_GATE))<=2.0:
 						load_area("outpost" if area=="capital" else "capital")
@@ -793,27 +928,6 @@ func toggle_gender() -> void:
 	hero.gender = "female" if hero.gender == "male" else "male"
 	hero.queue_redraw()
 
-func damage_enemy(amount: int = -1) -> void:
-	if enemy.hp<=0:
-		return
-	var damage: int = amount if amount>=0 else attack_value()
-	enemy.hp = maxi(0,enemy.hp-damage)
-	enemy.queue_redraw()
-	message = "Golpe certeiro · %d de dano" % damage
-	if enemy.hp == 0:
-		kills += 1
-		loot_gold = 25
-		xp += 50
-		if xp >= level*150:
-			xp -= level*150
-			level += 1
-		respawn = 35.0
-		target = false
-		route.clear()
-		enemy.state = "die"
-		enemy.age = 0
-		message = "Goblin derrotado · saque disponível"
-
 func _physics_process(dt: float) -> void:
 	if not playing or not is_instance_valid(hero):
 		return
@@ -837,51 +951,21 @@ func _physics_process(dt: float) -> void:
 		queue_redraw()
 	tick_residents(dt)
 	if attack_requested:
-		attack_requested = false
-		if target and area=="outpost" and enemy.hp > 0 and pos.distance_to(enemy_pos)<=1.5 and attack_time<=0 and clear_line(pos,enemy_pos):
-			target = true
-			hero.face(iso(enemy_pos)-iso(pos))
-			attack_time=0.52
-			damage_enemy()
-		elif area=="outpost" and enemy.hp > 0:
-			message = "Aproxime-se do inimigo."
+		attack_requested=false
+		if target and selected>=0 and selected<creatures.size():
+			var at: Vector2=creatures[selected]["pos"]
+			if pos.distance_to(at)<=1.5 and attack_time<=0 and clear_line(pos,at):
+				hero.face(iso(at)-iso(pos))
+				attack_time=.52
+				damage_creature(selected,attack_value())
+			else:
+				message="Aproxime-se do inimigo."
 	if moving and attack_time<=0:
 		hero.sync_walk(step_elapsed/step_duration)
 	else:
 		hero.animate("swing" if attack_time>0 else "stance",dt)
 	hero.position=iso(pos)
-	if area=="capital":
-		pass
-	elif enemy.hp>0:
-		var old: Vector2 = enemy_pos
-		var distance: float = pos.distance_to(enemy_pos)
-		if distance<7 and distance>1.4:
-			think -= dt
-			if think<=0:
-				think=.35
-				enemy_route=path(cell(enemy_pos),cell(pos))
-			enemy_pos=advance(enemy_pos,enemy_route,dt,0.85 if slow_time>0.0 else 1.65)
-		elif distance<=1.4:
-			enemy_route.clear()
-			enemy.face(iso(pos)-iso(enemy_pos))
-			if enemy_attack<=0:
-				enemy_attack=.9
-				hero.hp=maxi(0,hero.hp-maxi(1,8-defense_value()))
-		else:
-			enemy_route.clear()
-		if enemy_pos.distance_to(old)>0.001:
-			enemy.face(iso(enemy_pos)-iso(old))
-		enemy.animate("swing" if distance<=1.4 and enemy_attack>.48 else ("run" if enemy_pos.distance_to(old)>0.001 else "stance"),dt)
-	else:
-		enemy.animate("die",dt)
-		respawn-=dt
-		if respawn<=0:
-			enemy.hp=enemy.max_hp
-			enemy.queue_redraw()
-			loot_gold=0
-			enemy_pos=Vector2(HUNT)
-			enemy.state="stance"
-	enemy.position=iso(enemy_pos)
+	tick_creatures(dt)
 	if hero.hp<=0:
 		hero.hp=hero.max_hp
 		load_area("capital")
@@ -954,7 +1038,7 @@ func smoke() -> void:
 	assert(area=="capital" and valid(CAPITAL_START) and not hero.equipment and not has_gear and potions==0 and gold==0)
 	assert(path(CAPITAL_START,CAPITAL_GATE).size()>0)
 	assert(path(CAPITAL_START,Vector2i(CAPITAL_MERCHANT)).size()>0)
-	assert(not enemy.visible)
+	assert(creatures.is_empty())
 	test_movement()
 	load_area("outpost")
 	test_movement()
@@ -970,14 +1054,16 @@ func smoke() -> void:
 	assert(valid(Vector2i(24,38)))
 	assert(path(START,HUNT).size()>0)
 	assert(hero.textures.size()==28)
-	assert(enemy.textures.has("goblin"))
+	assert(creatures.size()>=4)
+	assert(creatures[0]["id"]=="goblin")
+	var goblin: Actor=creatures[0]["actor"]
 	var previous: int=gold
 	for n in range(6):
-		damage_enemy()
-	assert(enemy.hp==0 and gold==previous and loot_gold==25 and kills==1)
-	pos=enemy_pos
-	collect_loot()
-	assert(gold==previous+25 and loot_gold==0)
+		damage_creature(0,10)
+	assert(goblin.hp==0 and gold==previous and creatures[0]["loot"] and kills==1)
+	pos=creatures[0]["pos"]
+	assert(loot_creature(0))
+	assert(gold==previous+25 and not creatures[0]["loot"])
 	pos=Vector2(START)
 	assert(can_step(START,START))
 	assert(not can_step(START,Vector2i(-1,-1)))
@@ -1002,14 +1088,15 @@ func smoke() -> void:
 	assert(pos.distance_to(Vector2(CAPITAL_GATE))<.01)
 	assert(not move_route(.1))
 	load_area("outpost")
-	enemy.hp=60
-	enemy_pos=Vector2(HUNT)
-	pos=Vector2(HUNT)-Vector2(1,0)
+	var first: Actor=creatures[0]["actor"]
+	var at: Vector2=creatures[0]["pos"]
+	pos=at-Vector2(1,0)
 	mana=100
 	aim=0
-	assert(cast_at(enemy_pos))
-	assert(enemy.hp==38 and mana==92 and cooldowns[0]>0.0)
-	assert(not cast_at(enemy_pos))
+	assert(cast_at(at))
+	assert(first.hp==38 and mana==92 and cooldowns[0]>0.0)
+	assert(not cast_at(at))
+	assert(bestiary["goblin"]==1 and trophies["goblin"]==1)
 	print("REBORN SMOKE PASS: mouse routes, aimed skills, equipment and combat")
 	get_tree().quit()
 

@@ -75,12 +75,12 @@ func _draw() -> void:
 		layer("hands")
 		if gear.has("shield") and (direction < 4 or direction == 7):
 			layer("shield")
-	elif kind == "goblin":
-		if not textures.has("goblin"):
+	elif kind == "monster":
+		if not textures.has("monster"):
 			return
 		var rows: Array = frames.get(state, frames["stance"])
 		var row: int = int(rows[mini(frame, rows.size()-1)])
-		draw_texture_rect_region(textures["goblin"], Rect2(-48,-82,96,96), Rect2(direction*96,row*96,96,96))
+		draw_texture_rect_region(textures["monster"], Rect2(-48,-82,96,96), Rect2(direction*96,row*96,96,96))
 	elif kind == "npc":
 		if not textures.has(npc_name):
 			return
@@ -96,6 +96,6 @@ func _draw() -> void:
 		var w: float = font.get_string_size(actor_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
 		draw_string_outline(font,Vector2(-w/2,-71),actor_label,HORIZONTAL_ALIGNMENT_LEFT,-1,12,4,Color("#161713"))
 		draw_string(font,Vector2(-w/2,-71),actor_label,HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("#e4d4af"))
-		if kind == "goblin":
+		if kind == "monster":
 			draw_rect(Rect2(-20,-66,40,4),Color("#241710"))
 			draw_rect(Rect2(-20,-66,40.0*hp/max_hp,4),Color("#b04436"))

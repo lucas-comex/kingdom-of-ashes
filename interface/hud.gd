@@ -20,6 +20,8 @@ var skill_labels: Array[Label] = []
 var mana_label: Label
 var gear_buttons: Dictionary = {}
 var shop_buttons: Dictionary = {}
+var bestiary_panel: PanelContainer
+var bestiary_label: Label
 
 func panel_style() -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
@@ -50,7 +52,7 @@ func build(w) -> void:
 	root.add_child(top)
 	top.position=Vector2(16,16)
 	top.add_theme_stylebox_override("panel",panel_style())
-	var title:=make_label("KINGDOM OF ASHES  /  REBORN 0.7",18)
+	var title:=make_label("KINGDOM OF ASHES  /  REBORN 0.8",18)
 	top.add_child(title)
 	var side:=PanelContainer.new()
 	root.add_child(side)
@@ -91,6 +93,10 @@ func build(w) -> void:
 	save.text="Salvar progresso"
 	save.pressed.connect(world.manual_save)
 	col.add_child(save)
+	var journal:=Button.new()
+	journal.text="Bestiário"
+	journal.pressed.connect(func(): bestiary_panel.visible=not bestiary_panel.visible; update_view())
+	col.add_child(journal)
 	var bottom:=PanelContainer.new()
 	root.add_child(bottom)
 	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
@@ -160,6 +166,13 @@ func build(w) -> void:
 		slots.add_child(button)
 		gear_buttons[id]=button
 	bag.hide()
+	bestiary_panel=PanelContainer.new()
+	root.add_child(bestiary_panel)
+	bestiary_panel.position=Vector2(16,76)
+	bestiary_panel.add_theme_stylebox_override("panel",panel_style())
+	bestiary_label=make_label("",14)
+	bestiary_panel.add_child(bestiary_label)
+	bestiary_panel.hide()
 	shop=PanelContainer.new()
 	root.add_child(shop)
 	shop.position=Vector2(312,76)
@@ -256,6 +269,12 @@ func update_view() -> void:
 	if not is_instance_valid(life):
 		return
 	life.value=world.hero.hp
+	if is_instance_valid(bestiary_label) and bestiary_panel.visible:
+		var journal_text: String="BESTIÁRIO DO REINO\n"
+		for id in world.SPECIES:
+			var count: int=int(world.bestiary.get(id,0))
+			journal_text+="\n%s · %d abates\n%s: %d" % [world.SPECIES[id]["name"] if count>0 else "Criatura desconhecida",count,world.SPECIES[id]["loot"] if count>0 else "Troféu",world.trophies.get(id,0)]
+		bestiary_label.text=journal_text
 	mana_label.text="MANA %d/100" % int(world.mana)
 	for n in range(skill_labels.size()):
 		var cd: float = world.cooldowns[n]
