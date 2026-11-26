@@ -13,7 +13,7 @@ function paint(canvas,p,dir='south',frame=0,gear=0,action='stance'){
  if(window.KOASpritePack?.draw(canvas,p,dir,frame,gear,action))return;
  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.save();ctx.scale(canvas.width/96,canvas.height/96);
  const theta=(dirs.indexOf(dir)<0?0:dirs.indexOf(dir))*Math.PI/4,co=Math.cos(theta),si=Math.sin(theta),female=p.gender==='female';
- const [base,trim]=p.palette||vocationColors[p.vocation]||vocationColors.warrior,skin=p.skin,hair=p.hairColor,steel=gear&32?'#89938d':'#8997a5',leather='#674c38';
+ const [base,trim]=p.npc?(p.palette||vocationColors[p.vocation]||vocationColors.warrior):['#95836b','#71604a'],skin=p.skin,hair=p.hairColor,steel=gear&32?'#89938d':'#8997a5',leather='#674c38';
  const walk=action==='run'?Math.sin(frame*Math.PI/4):0,hit=action==='hit'?1:0,bob=Math.abs(walk)*1.1,swing=action==='swing'?Math.sin((frame+1)/4*Math.PI)*1.0:0,cast=action==='cast'||action==='shoot',dead=action==='die';
  const project=([x,y,z])=>({x:48+x*co-z*si,y:82-y*.92+(x*si+z*co)*.40-bob,depth:x*si+z*co});
  const nodes=[];const add=(depth,draw)=>nodes.push({depth,draw});
@@ -29,10 +29,10 @@ function paint(canvas,p,dir='south',frame=0,gear=0,action='stance'){
  if(dead){ctx.translate(48,82);ctx.rotate(Math.min(1,frame/5)*1.40);ctx.translate(-48,-82)}
  for(const s of [-1,1]){
   const stride=walk*s*6.5,hipP=[s*hip*.58,35,0],knee=[s*hip*.63,19,stride*.7],ankle=[s*hip*.67,5,stride],toe=[s*hip*.67,2,stride+3.5];
-  segment(hipP,knee,4.1,3.1,legs?steel:shade(base,.74),legs);orb(knee,3.6,3.8,legs?steel:shade(base,.8),legs,.2);
-  segment(knee,ankle,2.9,2.25,legs?steel:shade(base,.72),legs);
-  segment([ankle[0],10,ankle[2]],ankle,boots?3.3:2.5,boots?2.8:2.3,boots?leather:shade(base,.54));
-  segment(ankle,toe,2.9,2.7,boots?shade(leather,.7):'#3c3832');if(boots)thread([ankle[0]-2,10,ankle[2]+2],[ankle[0]+2,10,ankle[2]+2],trim,.8,.5);
+  segment(hipP,knee,4.1,3.1,legs?steel:p.npc?shade(base,.74):'#665949',legs);orb(knee,3.6,3.8,legs?steel:p.npc?shade(base,.8):'#6b5c4c',legs,.2);
+  segment(knee,ankle,2.9,2.25,legs?steel:p.npc?shade(base,.72):'#625347',legs);
+  segment([ankle[0],10,ankle[2]],ankle,boots?3.3:2.5,boots?2.8:2.3,boots?leather:p.npc?shade(base,.54):'#897663');
+  segment(ankle,toe,2.9,2.7,boots?shade(leather,.7):p.npc?'#3c3832':'#63564a');if(boots)thread([ankle[0]-2,10,ankle[2]+2],[ankle[0]+2,10,ankle[2]+2],trim,.8,.5);
  }
  orb([0,34,0],hip+1,5.5,torso,armor);
  segment([0,34,0],[0,47,0],waist,shoulder*.86,torso,armor);
@@ -40,8 +40,8 @@ function paint(canvas,p,dir='south',frame=0,gear=0,action='stance'){
  if(armor){for(let j=0;j<4;j++)thread([-waist,36+j*2,3.2],[waist,36+j*2,3.2],shade(steel,.58),.62,.3);
   thread([-shoulder*.8,47,4],[0,42,5],shade(steel,1.5),.8,.4);thread([0,42,5],[shoulder*.8,47,4],shade(steel,1.25),.8,.4);
  }else{for(let j=-2;j<=2;j++)thread([j*2,46,3.2],[j*1.5,36,3.2],shade(base,j%2?.65:1.2),.65,.25)}
- segment([-waist-1,35,0],[waist+1,35,0],1.65,1.65,leather,false,1.5);orb([0,35,4],2,1.6,trim,true,.65);
- if(p.vocation==='sorcerer'||p.vocation==='druid'||p.npcMantle){segment([0,48,-3],[0,13,-4-walk],shoulder*.83,hip+2,shade(base,.67),false,-.3);thread([-hip,14,-4],[hip,14,-4],trim,.8,-.25)}
+ segment([-waist-1,35,0],[waist+1,35,0],armor||p.npc?1.65:.85,armor||p.npc?1.65:.85,armor||p.npc?leather:'#a3977b',false,1.5);if(armor||p.npc)orb([0,35,4],2,1.6,trim,true,.65);else{orb([0,35,4],1.2,.95,'#ad9b79',false,.65);thread([0,35,4],[1,31,4.1],'#9c8a6e',.7,.7);thread([0,35,4],[-1,32,4.1],'#a29275',.6,.7);thread([-4,41,3.8],[-1,40,4.1],'#665a4b',1.2,.6);thread([-4,42,4],[-4,39,4],'#b8a588',.55,.7)}
+ if(p.npc&&(p.vocation==='sorcerer'||p.vocation==='druid'||p.npcMantle)){segment([0,48,-3],[0,13,-4-walk],shoulder*.83,hip+2,shade(base,.67),false,-.3);thread([-hip,14,-4],[hip,14,-4],trim,.8,-.25)}
  const hands=[];
  for(const s of [-1,1]){const w=walk*s*4,raising=s===1?swing*11:cast?4:0,upper=[s*shoulder,49,0],elbow=[s*(shoulder+1.1),39,w+raising*.35],hand=[s*(shoulder+1.5),30+raising,w+raising*.8+2];
   segment(upper,elbow,3.8,2.65,armor?steel:base,armor);orb(upper,armor?5:4.1,armor?4.6:4.5,torso,armor,.1);
@@ -68,7 +68,7 @@ function paint(canvas,p,dir='south',frame=0,gear=0,action='stance'){
  nodes.sort((a,b)=>a.depth-b.depth).forEach(n=>n.draw());if(hit){ctx.globalCompositeOperation='source-atop';ctx.fillStyle='#c43c3a26';ctx.fillRect(20,10,56,73)}
  ctx.restore();
 }
-function textureFor(scene,p,dir,frame,gear,action,prefix){action=action||'stance';if(action==='stance'||action==='hit')frame=0;const key=prefix+'-'+(!p.npc?window.KOASpritePack?.revision||0:0)+'-'+[p.gender,p.vocation,p.hair,p.beard,p.skin,p.hairColor,p.beardColor,p.hideHelmet,dir,frame,gear&8191,action||'stance'].join('-');if(scene.textures.exists(key))return key;const cv=document.createElement('canvas');cv.width=cv.height=96;if(p.npc||window.koaEco||window.KOASpritePack?.active){paint(cv,p,dir,frame,gear,action)}else{const high=document.createElement('canvas');high.width=high.height=192;paint(high,p,dir,frame,gear,action);const ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(high,0,0,96,96)}scene.textures.addCanvas(key,cv);return key}
+function textureFor(scene,p,dir,frame,gear,action,prefix){action=action||'stance';if(action==='stance'||action==='hit')frame=0;const key=prefix+'-'+(!p.npc?window.KOASpritePack?.revision||0:0)+'-'+[p.gender,p.npc?p.vocation:'common',p.hair,p.beard,p.skin,p.hairColor,p.beardColor,p.hideHelmet,dir,frame,gear&8191,action||'stance'].join('-');if(scene.textures.exists(key))return key;const cv=document.createElement('canvas');cv.width=cv.height=96;if(p.npc||window.koaEco||window.KOASpritePack?.active){paint(cv,p,dir,frame,gear,action)}else{const high=document.createElement('canvas');high.width=high.height=192;paint(high,p,dir,frame,gear,action);const ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(high,0,0,96,96)}scene.textures.addCanvas(key,cv);return key}
 const npcPalettes=[['#624b38','#baa179'],['#40534c','#b9a47e'],['#6b4e48','#c2a681'],['#4e4b66','#c4b39c'],['#736340','#ddc8a5'],['#63594e','#c3b09a']];
 function npcTexture(scene,n,dir,frame,gear=0){const role=n.role||'civilian',label=(n.job||'')+' '+n.name,seed=[...label+' '+(n.anchor?.x??n.home?.x??n.x??0)+' '+(n.anchor?.y??n.home?.y??n.y??0)].reduce((v,ch)=>(v*31+ch.charCodeAt(0))>>>0,0);
  const job=label.toLowerCase(),smith=/ferreir|armeir/.test(job),baker=/padeir/.test(job),priest=/sacerd|curande/.test(job),merchant=/mercador|mercante/.test(job);
