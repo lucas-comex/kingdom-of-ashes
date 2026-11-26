@@ -6,7 +6,7 @@ Direction: original 2.5D isometric medieval visuals, inspired by classic Age of 
 |---|---|---|
 | 15.8 | Landscape artwork: 8 terrain types, 4 tree types, 5 detail types, shores and cached regional textures | Implemented; Chromium passed (#73) |
 | 15.9 | Differentiated house, tavern, temple, barracks, palace, fortifications, detailed furniture and room floors | Implemented; Chromium pending |
-| 16.0 | Character and equipment sprites, eight-direction movement and attacks | Planned |
+| 16.0 | Character and equipment sprites, eight-direction movement and attacks | Imported FLARE hero/NPC artwork; hero combat frames integrated; NPC movement/attack artwork and visual review pending |
 | 16.1 | 30 distinct creatures, loot and level bands | Planned |
 | 16.2 | 256×256 continent, Blackwood, swamp, Frostgard, Akhar, Ignareth, Morghul, Stormhaven, Nharoth in stages | Planned |
 | 16.3 | Creature aggression, fleeing, pack behavior, ranged combat, poison, elemental resistances | Planned |

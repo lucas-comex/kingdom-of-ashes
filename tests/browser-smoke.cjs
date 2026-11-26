@@ -48,6 +48,38 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
     await page.close();continue;
    }
    if(mode==='preview'){
+     const sprites=await page.evaluate(()=>{
+       const scene=window.koaGame.scene.getScenes(true)[0], flare=window.KOAFlare;
+       const dirs=Object.keys(flare.dirs), states={stance:4,run:8,swing:4,block:2,hit:2,shoot:4,cast:4,die:6};
+       const failures=[], keys=new Set(), checked=new Set();
+       function check(role,dir,frame,gear,action){
+         const key=flare.texture(scene,role,dir,frame,gear,action);
+         if(!key||!scene.textures.exists(key)){failures.push([role,dir,frame,gear,action]);return key}
+         if(!checked.has(key)){
+           const canvas=scene.textures.get(key).getSourceImage(), rgba=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+           if(!rgba.some((v,i)=>i%4===3&&v>0))failures.push(['transparent',key]);
+           checked.add(key);
+         }
+         keys.add(key);return key;
+       }
+       for(const dir of dirs){
+         for(const [action,count] of Object.entries(states))for(let f=0;f<count;f++)check('hero',dir,f,15,action);
+         for(const role of Object.keys(flare.roles))for(let f=0;f<4;f++)check(role,dir,f,0);
+       }
+       const variants=[0,1,2,4,8].map(mask=>check('hero','south',0,mask,'stance'));
+       const hashes=variants.map(key=>{
+         if(!key)return null;
+         const canvas=scene.textures.get(key).getSourceImage(), pixels=canvas.getContext('2d').getImageData(0,0,96,96).data;
+         let hash=2166136261;for(const value of pixels)hash=Math.imul(hash^value,16777619);return hash;
+       });
+       const live=scene.hero.texture.key;
+       return {failures,unique:keys.size,gearVariants:new Set(hashes).size,live};
+     });
+     assert.deepEqual(sprites.failures,[],'FLARE sprites must render in all supported directions and frames');
+     assert.ok(sprites.unique>=440,'distinct animation textures');
+     assert.equal(sprites.gearVariants,5,'each equipment layer must change the rendered pixels');
+     assert.ok(sprites.live.startsWith('flare-unit-hero-'),'live hero must use imported art');
+     console.log('FLARE character and equipment PASS',sprites);
      await page.locator('#quickEditMode').click();
      await page.locator('#quickSlots [data-index="1"]').click();
      await page.locator('#quickAction').selectOption('X');
