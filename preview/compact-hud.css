@@ -61,3 +61,18 @@ body>header{background:linear-gradient(#24211b,#12120f);border-bottom:1px solid 
 [data-kind=loot] button[data-loot]{min-height:42px}
 @media(max-width:780px){#stage{grid-template-columns:1fr}#viewport{height:auto;aspect-ratio:16/9;min-height:230px}#game{width:100%;height:100%;position:absolute;inset:0}#side{min-height:130px}#tools button{font-size:10px}#worldClock{transform:scale(.7)}}
 #play:fullscreen #game{width:100%!important}#play:fullscreen #viewport{height:calc(100dvh - 125px)}
+
+/* Visual Rebirth: compact original artwork, tactile aged-metal framing, no heavy live filter. */
+#viewport:after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;box-shadow:inset 0 0 75px #15130b42,inset 0 0 12px #1a150d40}
+#sideGear .equipCell{background:radial-gradient(ellipse at 50% 20%,#4d4332,#171713 78%);min-height:43px}
+.koa-avatar{display:flex;align-items:center;gap:5px;padding:3px 4px;background:radial-gradient(ellipse at 20% 50%,#534832,#1a1812 80%);border:1px solid #6d593a;margin:3px 0}
+.koa-avatar canvas{width:62px;height:62px;object-fit:contain;flex:none}
+.koa-avatar div{min-width:0;display:flex;flex-direction:column;gap:3px}.koa-avatar b{font:600 11px Georgia,serif;color:#e7c88c;overflow-wrap:anywhere}.koa-avatar small{font:9px system-ui;color:#b6ad94}
+.rasterIcon{object-fit:contain;filter:drop-shadow(0 1px 1px #0008)}
+#sideGear .equipCell .rasterIcon{width:26px;height:26px}#quickSlots .quickSlot .rasterIcon{width:23px;height:23px}
+.rpgpanel .relicCard .rasterIcon,.rpgpanel .slot .rasterIcon{width:44px;height:44px;object-fit:contain}
+#sideGear .equipCell[data-equip]{border-color:#bb9c60;background:radial-gradient(ellipse at 50% 30%,#584937,#221d16 75%)}
+#sideGear .equipCell:focus-visible{outline:1px solid #e2c487}#sideMap svg{background:#242a1d}
+#bars .meter i{box-shadow:inset 0 2px 3px #ffffff22,inset 0 -3px 4px #0004}
+#sideCap{font-size:10px}.dock h2{border-bottom:1px solid #776242}.rpgpanel .compare{color:#d6be8d}
+@media(max-width:780px){.koa-avatar{display:none}#viewport:after{box-shadow:inset 0 0 35px #15130b35}}

@@ -85,3 +85,11 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 ## 17.2.1 — Nitidez e legibilidade
 - Oito quadros (parado e passo principal de cada vista masculina/feminina) no tamanho nativo de 96px, sobrepostos ao atlas compacto; os outros oito quadros mantêm a versão comprimida. Arquivo adicional de 6.846 bytes. Equipamentos continuam independentes.
 - Nomes de NPCs mais próximos e menos poluição visual na praça. Diagnóstico informa quantidade de quadros nativos. Sem mudanças no save ou nas regras do jogo.
+
+## 17.3 — The Visual Rebirth (primeiro pacote integrado)
+- Arte original: cores de pele, cabelo e barba aplicadas por máscara de pixels preservando luminância, detalhes de cabelo longo/preso e aventais de profissão. Atlas e equipamentos continuam separados; ainda não são oito direções pintadas nem todos os estilos de cabelo têm silhueta independente.
+- Nove ícones de equipamento derivados da arte original; miniatura viva do personagem no painel de equipamento; atributos em tooltip. Menos reconstruções de DOM e minimapa com coordenadas arredondadas.
+- Transições de biomas e estradas por máscaras de borda reutilizáveis, variações de sombra, brilho de água animado e limitado a 80 trechos próximos, desligado em modo econômico.
+- Fachadas distintas para ferreiro, padaria, herbalista e estalagem, com sinais próprios; telhas com microtextura. Colisões e interiores existentes mantidos.
+- Pelagem texturizada nas criaturas, mantendo espécies e animações existentes; redução de quadros redundantes e frequência de atualização de guardas no modo econômico.
+- Sem novas contas, loja, multiplayer ou mudanças no save. Arte final de mundo, oito vistas reais, animações pintadas completas e metas de FPS ainda pendentes. Testes adicionados para personalização, ícones e bordas de terreno.
