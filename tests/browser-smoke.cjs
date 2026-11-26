@@ -16,13 +16,13 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
  let browser;
  try{
   browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
-  for(const mode of ['normal','safe','preview']){
+  for(const mode of ['normal','safe','preview','eco']){
    const page=await browser.newPage({viewport:{width:1280,height:800}});
    const errors=[];
    page.on('pageerror',err=>errors.push(err.stack||err.message));
    page.on('console',msg=>{if(msg.type()==='error')console.error(mode,msg.text())});
    await page.route('https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js',route=>route.fulfill({path:require.resolve('phaser/dist/phaser.min.js'),contentType:'application/javascript'}));
-   await page.goto('http://127.0.0.1:'+server.address().port+(mode==='preview'?'/preview/index.html?test=1':'/?'+(mode==='safe'?'safe=1':'test=1')),{waitUntil:'load'});
+   await page.goto('http://127.0.0.1:'+server.address().port+(mode==='preview'||mode==='eco'?'/preview/index.html?test=1'+(mode==='eco'?'&eco=1':''):'/?'+(mode==='safe'?'safe=1':'test=1')),{waitUntil:'load'});
    await page.waitForFunction(()=>typeof window.koaSave==='function',{timeout:60000});
    await page.locator('#start').click();
    await page.waitForFunction(()=>window.koaStats?.worldSize===80,{timeout:20000});
@@ -49,6 +49,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      await page.locator('#dropConfirm').click();
      await page.waitForFunction(n=>window.koaStats.meat===n-1,before);
      await page.locator('#tools [data-panel=ground]').click();
+     assert.ok(await page.evaluate(()=>Number(document.querySelector('[data-kind=ground]').style.zIndex)>Number(document.querySelector('[data-kind=bag]').style.zIndex)),'new ground window must be above bag');
      await page.locator('[data-kind=ground] [data-pickup]').first().click();
      await page.waitForFunction(n=>window.koaStats.meat===n,before);
     }
@@ -57,6 +58,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
     await page.evaluate(()=>window.KOAInventory.move('meat','gold'));
     assert.equal(await page.evaluate(()=>window.KOAInventory.order[0]),'meat');
    }
+   if(mode==='eco'){assert.equal(await page.evaluate(()=>window.koaEco),true);assert.equal(await page.evaluate(()=>window.koaPerf.frameLimit),30);assert.equal(await page.evaluate(()=>document.documentElement.dataset.eco),'yes')}
    await page.screenshot({path:'artifacts/'+mode+'.png'});
    assert.deepEqual(errors,[],mode+': browser runtime errors');
    console.log(mode,'PASS',start,end);
