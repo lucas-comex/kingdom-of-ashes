@@ -4,6 +4,9 @@ on:
     branches: [v22-classic-visual-overhaul]
     paths: ['scripts/import_classic22.py','.github/workflows/classic-art-import.yml']
   workflow_dispatch:
+concurrency:
+  group: classic-art-import-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:

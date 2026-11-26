@@ -2,7 +2,7 @@
 :root{--iron:#241e1a;--edge:#7f6849;--gold:#d1ad71;--panel:#151412}
 body{background:#100e0d;color:#d7c7a8}body>header{background:linear-gradient(180deg,#29211c,#100d0c);border-bottom:2px solid #77613f}body>header h1{font-family:Georgia,serif;letter-spacing:3px;color:#ddbb81;text-shadow:0 2px 4px #000}
 #stage{grid-template-columns:minmax(0,1fr) 220px;gap:5px;padding:4px;background:#100f0d}
-#viewport{height:max(330px,calc(100dvh - 215px));border:2px solid #67543b;box-shadow:0 0 0 1px #231c16,inset 0 0 14px #000}
+#viewport{height:max(330px,calc(100dvh - 215px));border:0;outline:1px solid #67543b;outline-offset:-1px;box-shadow:inset 0 0 14px #000}
 #viewport:after{box-shadow:inset 0 0 70px #0c0a0750;pointer-events:none}
 #side{background:repeating-linear-gradient(135deg,#211b17 0,#1b1714 3px,#1b1714 7px);border:2px ridge #796342}
 .dock{background:linear-gradient(145deg,#231e19,#100e0c);border:1px solid #79603d;box-shadow:inset 0 0 12px #000a;padding:5px}
@@ -23,3 +23,5 @@ body{background:#100e0d;color:#d7c7a8}body>header{background:linear-gradient(180
 .rpgpanel{background:linear-gradient(120deg,#302218,#15110e 76%);border:2px ridge #ad8855;box-shadow:0 8px 26px #000d}.rpgpanel .slot{background:radial-gradient(ellipse at 50% 20%,#4e3924,#18120d);border-color:#8b6d42}.rpgpanel .panelbody{color:#decaab}
 #worldClock{transform:scale(.72);opacity:.88}
 @media(max-width:780px){#stage{grid-template-columns:1fr}#viewport{height:auto;aspect-ratio:16/9;min-height:230px}#classicCombat{grid-template-columns:54px minmax(0,1fr) 54px;gap:3px}.koa-orb{width:52px;height:52px}.koa-orb b{top:16px;font-size:9px}.koa-orb small{top:29px;font-size:8px}#quickSlots{justify-content:flex-start}#sideScroll{max-height:180px}}
+
+#bars{grid-template-columns:repeat(3,minmax(0,1fr))}
