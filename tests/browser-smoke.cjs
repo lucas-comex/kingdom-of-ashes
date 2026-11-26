@@ -16,28 +16,42 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
  let browser;
  try{
   browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
-  for(const mode of ['normal','safe','preview','eco','level100']){
+  for(const mode of ['normal','safe','preview','eco','level100','level1000']){
    const page=await browser.newPage({viewport:{width:1280,height:800}});
    const errors=[];
    page.on('pageerror',err=>{errors.push(err.stack||err.message);console.error(mode,'PAGE ERROR',err.stack||err.message)});
    page.on('console',msg=>{if(msg.type()==='error')console.error(mode,msg.text())});
    await page.route('https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js',route=>route.fulfill({path:require.resolve('phaser/dist/phaser.min.js'),contentType:'application/javascript'}));
-   await page.goto('http://127.0.0.1:'+server.address().port+(mode==='preview'||mode==='eco'||mode==='level100'?'/preview/index.html?test=1'+(mode==='eco'?'&eco=1':mode==='level100'?'&leveltest=100':''):'/?'+(mode==='safe'?'safe=1':'test=1')),{waitUntil:'load'});
+   await page.goto('http://127.0.0.1:'+server.address().port+(mode==='preview'||mode==='eco'||mode==='level100'||mode==='level1000'?'/preview/index.html?test=1'+(mode==='eco'?'&eco=1':mode==='level100'?'&leveltest=100':mode==='level1000'?'&leveltest=1000':''):'/?'+(mode==='safe'?'safe=1':'test=1')),{waitUntil:'load'});
    await page.waitForFunction(()=>typeof window.koaSave==='function',null,{timeout:60000});
    await page.locator('#start').click();
-   const expectedWorldSize=['preview','eco','level100'].includes(mode)?160:80;
+   const expectedWorldSize=['preview','eco','level100','level1000'].includes(mode)?160:80;
     await page.waitForFunction(size=>window.koaStats?.worldSize===size,expectedWorldSize,{timeout:20000});
     assert.equal(await page.evaluate(()=>window.koaStats.worldSize),expectedWorldSize);
-   if(mode==='level100'){
-    assert.deepEqual(await page.evaluate(()=>({level:window.koaStats.level,hp:window.koaStats.maxHP,mana:window.koaStats.maxMana,xp:window.koaStats.xpNeeded,speed:window.koaStats.speed})),{level:100,hp:1585,mana:1090,xp:114000,speed:12.4});
+   if(mode==='level100'||mode==='level1000'){
+    assert.deepEqual(await page.evaluate(()=>({level:window.koaStats.level,hp:window.koaStats.maxHP,mana:window.koaStats.maxMana,xp:window.koaStats.xpNeeded,speed:window.koaStats.speed})),mode==='level1000'?{level:1000,hp:15085,mana:10090,xp:10140000,speed:102.4}:{level:100,hp:1585,mana:1090,xp:114000,speed:12.4});
     assert.equal(await page.evaluate(()=>window.koaSave()),false);
     assert.equal(await page.evaluate(()=>localStorage.getItem('koa-preview-save-v1')),null);
-    await page.screenshot({path:'artifacts/level100.png'});
+    await page.screenshot({path:'artifacts/'+mode+'.png'});
     assert.deepEqual(errors,[],mode+': browser runtime errors');
     console.log(mode,'PASS');
     await page.close();continue;
    }
-   const start=await page.evaluate(()=>window.koaStats.position);
+   if(mode==='preview'){
+     await page.locator('#quickEditMode').click();
+     await page.locator('#quickSlots [data-index="1"]').click();
+     await page.locator('#quickAction').selectOption('X');
+     await page.locator('#quickApply').click();
+     assert.equal(await page.locator('#quickSlots [data-index="1"]').getAttribute('data-action'),'X');
+     assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('koa-preview-hotkeys'))[1]),'X');
+     await page.locator('#quickEditMode').click();
+     await page.locator('#quickSlots [data-index="1"]').click({button:'right'});
+     await page.locator('#quickAction').selectOption('U');
+     await page.locator('#quickApply').click();
+     assert.equal(await page.locator('#quickSlots [data-index="1"]').getAttribute('data-action'),'U');
+     console.log('hotkey edit PASS');
+    }
+    const start=await page.evaluate(()=>window.koaStats.position);
    await page.keyboard.down('d');await page.waitForTimeout(1700);await page.keyboard.up('d');
    await page.waitForTimeout(500);
    const end=await page.evaluate(()=>window.koaStats.position);
