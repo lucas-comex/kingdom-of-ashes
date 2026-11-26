@@ -111,3 +111,8 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - Recorte automático das margens transparentes do atlas e encaixes independentes de gênero, frente/costas e ação. Arma vinculada à mão, escudo elevado ao bloquear, caminhada em seis passos com quatro quadros distintos, inclinação de torso e poses de combate a partir da arte raster. Laterais aproximadas por transformação, não novos desenhos de oito ângulos.
 - Variações de cor estáveis por identidade de equipamento, sem mudar estatísticas. Avatar lateral acompanha peças equipadas. Cache reaproveitável de aldeões por aparência e de recortes dos itens.
 - Fase de caminhada acompanha distância realmente percorrida, não velocidade nominal do relógio; velocidade e colisões mantidas. Testes novos de encaixe, caminhada, ataque, direção lateral e distinção entre equipamentos. Arte pintada final e desempenho no dispositivo do usuário não verificados.
+
+## 18.0 — Combate e progressão
+- 12 habilidades exclusivas (3 por vocação), nível mínimo, arma exigida, mana, recarga e maestria persistente por uso. Ataques usam a mesma rotina de dano, morte, XP e loot existente; proteção temporária, cura e lentidão, efeitos leves.
+- Resistências/vulnerabilidades físicas, de fogo, gelo e natureza por espécie, aplicadas às habilidades ofensivas. O Rei Sepultado possui três fases de onda de cinzas; Guardião acelera ataques com pouca vida.
+- Oito novos equipamentos de recompensa/loot, sem alterar os itens anteriores. Painel de magias e barra compacta clicável. Arte reutiliza atlas atual; não há multiplayer, conta ou monetização. Testes de regressão e de recarga/maestria; balanceamento e FPS reais pendentes.
