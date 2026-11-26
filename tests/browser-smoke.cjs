@@ -212,9 +212,9 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
     console.log('interior entry/exit PASS');
     assert.equal(await page.evaluate(()=>window.koaStats.worldSize),192);
     const expanded=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0];w.routeTo({x:148,y:148});const end=w.path.at(-1)||w.goal;w.goal=null;w.path=[];return {end,doors:w.houses.filter(h=>!h.disabled&&w.walkable(h.door.x,h.door.y)).length,active:w.sceneryActive.size,total:w.trees.length}});
-    assert.deepEqual(expanded.end,{x:148,y:148});assert.equal(expanded.doors,45);assert.ok(expanded.active<expanded.total/4,'vegetation must be streamed locally');
+    assert.deepEqual(expanded.end,{x:148,y:148});assert.equal(expanded.doors,57,'all 45 original and 12 new building entrances must be accessible');assert.ok(expanded.active<expanded.total/4,'vegetation must be streamed locally');
     await page.locator('#tools [data-panel=worldmap]').click();await page.locator('[data-kind=worldmap]').getByText('192 × 192',{exact:false}).waitFor();
-    console.log('expanded world and streaming PASS',expanded);
+    const north=await page.evaluate(()=>{const w=window.koaGame.scene.getScenes(true)[0],a=window.KOAMounts;return {towns:window.koaStats.towns.length,reachable:a.towns.map(([x,y])=>{w.routeTo({x,y});const end=w.path.at(-1)||w.goal;w.goal=null;w.path=[];return end&&end.x===x&&end.y===y}),doors:w.houses.slice(-12).every(h=>w.walkable(h.door.x,h.door.y)),chests:a.chests.length}});assert.deepEqual(north,{towns:13,reachable:[true,true,true],doors:true,chests:6});console.log('expanded world and streaming PASS',expanded,north);
 
 
    }

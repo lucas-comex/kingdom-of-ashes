@@ -131,3 +131,5 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - Mapa de 192×192, 44% mais células que 160×160. Mantém coordenadas antigas e limites das masmorras em 200+. Três cidades adicionais e 12 edifícios; Cordilheira de Gelo, Costa do Sal Negro e Floresta de Nortenhal usam materiais existentes. 18 inimigos e 6 baús adicionais.
 - Três montarias adquiridas por ouro e nível nos estábulos: +18%, +28% e +38% de deslocamento exclusivamente fora de combate e interiores. Propriedade persistente; montaria ativa não persistida. Sprites procedurais em cache e cavaleiro sobreposto. Sem mudança em dano, XP ou ataque.
 - Testes de compra única, bônus, bloqueio em combate, arte e dimensão de mapa. Balanceamento, aparência e FPS pendentes. Não são continentes separados; cadastro, rede e loja premium continuam ausentes.
+
+- 19.2 validação: atualizar a expectativa de 45 para 57 portas acessíveis após acrescentar 12 edifícios; testar explicitamente as três novas rotas e as portas novas.
