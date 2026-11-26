@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname,'..');
-const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg+xml','.css':'text/css','.png':'image/png'};
+const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg+xml','.css':'text/css','.png':'image/png','.webp':'image/webp'};
 (async()=>{
  const server=http.createServer((req,res)=>{
   const url=new URL(req.url,'http://127.0.0.1');
@@ -28,7 +28,9 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      assert.equal(await page.locator('#registerTab').isVisible(),false);
      await page.locator('#openCreator').click();
      assert.equal(await page.locator('#creatorPanel').isVisible(),true);
-     const pack=await page.evaluate(async()=>{const api=window.KOASpritePack,c=document.createElement('canvas');c.width=384;c.height=512;const x=c.getContext('2d');x.fillStyle='#794b35';x.fillRect(38,10,20,72);x.fillStyle='#8b9cac';x.fillRect(64*5+16,384+8,32,40);await api.loadURL(c.toDataURL(),false);const out=document.createElement('canvas');out.width=out.height=96;const p=window.KOAAppearance.get();api.draw(out,p,'south',0,0,'stance');const before=out.toDataURL();api.draw(out,p,'south',0,2,'stance');const changed=out.toDataURL()!==before;api.clear();return {changed,active:api.active}});assert.deepEqual(pack,{changed:true,active:false});
+     assert.equal(await page.evaluate(()=>window.KOASpritePack.source),'built-in','original raster must load automatically from the bundled asset');
+     const pack=await page.evaluate(async()=>{const api=window.KOASpritePack,c=document.createElement('canvas');c.width=384;c.height=512;const x=c.getContext('2d');x.fillStyle='#794b35';x.fillRect(38,10,20,72);x.fillStyle='#8b9cac';x.fillRect(64*5+16,384+8,32,40);await api.loadURL(c.toDataURL(),false);const out=document.createElement('canvas');out.width=out.height=96;const p=window.KOAAppearance.get();api.draw(out,p,'south',0,0,'stance');const before=out.toDataURL();api.draw(out,p,'south',0,2,'stance');const changed=out.toDataURL()!==before;api.clear();const active=api.active;api.useDefault();return {changed,active}});assert.deepEqual(pack,{changed:true,active:false});
+     const starter=await page.evaluate(()=>{const cv=document.createElement('canvas');cv.width=cv.height=96;const p=window.KOAAppearance.get();return ['warrior','archer','sorcerer','druid'].map(vocation=>{window.KOAAppearance.paint(cv,{...p,vocation},'south',0,0,'stance');return cv.toDataURL()})});assert.equal(new Set(starter).size,1,'starting clothing must be identical across vocations');
      assert.equal(await page.locator('#accountPanel input[type=password]').isDisabled(),true);
      await page.locator('#appearanceGender').selectOption('female');
      await page.locator('#appearanceClass').selectOption('archer');
@@ -106,7 +108,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      assert.deepEqual(sprites.failures,[],'FLARE sprites must render in all supported directions and frames');
      assert.ok(sprites.unique>=440,'distinct animation textures');
      assert.equal(sprites.gearVariants,5,'each equipment layer must change the rendered pixels');
-     assert.ok(sprites.live.startsWith('koa-original-'),'live hero must use original customizable art');
+     assert.ok(sprites.live.startsWith('koa-original-'),'live hero must use original customizable art');assert.equal(await page.evaluate(()=>window.KOASpritePack.active),true);const viewport=await page.evaluate(()=>{const a=document.getElementById('game').getBoundingClientRect(),b=document.getElementById('viewport').getBoundingClientRect();return {gap:Math.abs(a.width-b.width),height:a.height}});assert.ok(viewport.gap<3&&viewport.height>300,'game canvas should fill the viewport');
      assert.equal(await page.evaluate(()=>window.KOAAppearance.get().gender),'female');
      assert.equal(await page.evaluate(()=>window.KOAAppearance.get().vocation),'archer');
      const gearResult=await page.evaluate(()=>{

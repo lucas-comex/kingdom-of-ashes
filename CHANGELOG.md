@@ -70,3 +70,14 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - Importador de atlas PNG 384×512 (16 quadros base, duas vistas por gênero, espelhamento e recortes de equipamentos), persistência local, prévia e integração com o herói.
 - O arquivo artístico não está no GitHub: pode ser importado pelo menu. Os sprites são experimentais; penteados/tom de pele mantêm seus dados, mas o atlas ainda não oferece todas as variações. Sem oito vistas distintas ou ataques pintados completos.
 - Redução da geração redundante de quadros parados; pré-aquecimento de caminhada; texturas de NPCs na resolução de destino e atualização menos frequente. Sem alegação de ganho medido de FPS.
+
+## 17.1.1 — Vestes de camponês
+- Roupa inicial neutra e desgastada para todas as vocações: tecido em bege apagado, calças terrosas, cinto simples de corda, sem capa ou ornamentos de classe gratuitos.
+- Atlas importado recebe tratamento de desgaste e cor uma única vez; armaduras continuam recortadas separadamente, sem alterar inventário ou save.
+- Teste confirma que a roupa base não depende da vocação. O atlas artístico ainda é importado manualmente, não incluído no servidor.
+
+## 17.2 — Dark fantasy / original sprites by default
+- Original generated character atlas bundled as WebP, 192×256 (6,294 bytes), auto-activated during scene preload. Full PNG remains optional. Male/female and equipment layers retained; NPCs use tinted versions of the same base; skeletons and animals retain their existing artwork. Four approximate views and incomplete customization/attack poses remain limitations.
+- Ground palette, finer foliage and architecture texture contrast revised; static cached landscape retained. Corpses now retain the defeated creature's actual texture instead of geometric placeholders.
+- Viewport fills available width with dynamically resized Phaser camera and updated pointer coordinates; compact dark HUD; loot minimum height and saved panel layout correction.
+- Tests assert bundled raster activation and viewport fill, plus existing gameplay regressions. Real-device FPS and final appearance still need verification.
