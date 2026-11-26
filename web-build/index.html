@@ -93,7 +93,7 @@ body {
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
 
-	</head>
+	<style>body{display:grid;place-items:center;height:100vh;background:#0b0c0b}#canvas{width:min(100vw,160vh);height:min(62.5vw,100vh);object-fit:contain}#koa-quality{position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:5;background:#151713e8;color:#e4d4ae;font:12px Arial;padding:5px 8px;border:1px solid #7b6748;border-radius:5px}#koa-quality select{background:#272a23;color:#eadfca;border:0;font:inherit}#koa-quality small{margin-left:6px}</style></head>
 	<body>
 		<canvas id="canvas">
 			Your browser does not support the canvas tag.
@@ -109,9 +109,19 @@ body {
 			<div id="status-notice"></div>
 		</div>
 
-		<script src="index.js"></script>
+		<div id="koa-quality">Gráficos: <select id="koa-mode" aria-label="Qualidade gráfica"><option value="480">Ultra leve</option><option value="640">Leve</option><option value="800">Equilibrado</option><option value="960">Alta</option></select><small id="koa-fps"></small></div><script>
+(function(){
+const canvas=document.getElementById('canvas'),select=document.getElementById('koa-mode');
+const modes=[480,640,800,960];let width=640;
+try{const saved=Number(localStorage.getItem('koa-render-width'));if(modes.includes(saved))width=saved;}catch(e){}
+function apply(w){canvas.width=w;canvas.height=w*5/8;select.value=String(w);try{localStorage.setItem('koa-render-width',String(w));}catch(e){}}
+apply(width);select.addEventListener('change',()=>{apply(Number(select.value));canvas.focus()});
+window.addEventListener('contextmenu',e=>{if(e.target===canvas)e.preventDefault()});
+setInterval(()=>{document.getElementById('koa-fps').textContent=Number.isFinite(window.koaFPS)?window.koaFPS+' FPS':''},1000);
+})();
+</script><script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":21075680,"index.wasm":43699190},"focusCanvas":true,"gdextensionLibs":[]};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":0,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":21078080,"index.wasm":43699190},"focusCanvas":true,"gdextensionLibs":[]};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
