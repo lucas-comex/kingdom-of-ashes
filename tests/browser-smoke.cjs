@@ -28,6 +28,7 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      assert.equal(await page.locator('#registerTab').isVisible(),false);
      await page.locator('#openCreator').click();
      assert.equal(await page.locator('#creatorPanel').isVisible(),true);
+     const pack=await page.evaluate(async()=>{const api=window.KOASpritePack,c=document.createElement('canvas');c.width=384;c.height=512;const x=c.getContext('2d');x.fillStyle='#794b35';x.fillRect(38,10,20,72);x.fillStyle='#8b9cac';x.fillRect(64*5+16,384+8,32,40);await api.loadURL(c.toDataURL(),false);const out=document.createElement('canvas');out.width=out.height=96;const p=window.KOAAppearance.get();api.draw(out,p,'south',0,0,'stance');const before=out.toDataURL();api.draw(out,p,'south',0,2,'stance');const changed=out.toDataURL()!==before;api.clear();return {changed,active:api.active}});assert.deepEqual(pack,{changed:true,active:false});
      assert.equal(await page.locator('#accountPanel input[type=password]').isDisabled(),true);
      await page.locator('#appearanceGender').selectOption('female');
      await page.locator('#appearanceClass').selectOption('archer');

@@ -65,3 +65,8 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - 12 talentos distribuídos pelas 4 vocações, pontos a cada 2 níveis, efeitos de dano, defesa, crítico, alcance, velocidade e mana/cura.
 - Descoberta de 10 cidades, viagem rápida por ouro, banco protegido da perda de ouro na morte.
 - Migração aditiva dos saves, sem contas, multiplayer ou loja cosmética. Novos sistemas e regressões em validação; arte gráfica permanece experimental.
+
+## 17.1 — Atlas original e desempenho
+- Importador de atlas PNG 384×512 (16 quadros base, duas vistas por gênero, espelhamento e recortes de equipamentos), persistência local, prévia e integração com o herói.
+- O arquivo artístico não está no GitHub: pode ser importado pelo menu. Os sprites são experimentais; penteados/tom de pele mantêm seus dados, mas o atlas ainda não oferece todas as variações. Sem oito vistas distintas ou ataques pintados completos.
+- Redução da geração redundante de quadros parados; pré-aquecimento de caminhada; texturas de NPCs na resolução de destino e atualização menos frequente. Sem alegação de ganho medido de FPS.
