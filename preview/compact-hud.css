@@ -86,3 +86,12 @@ body>header{background:linear-gradient(#24211b,#12120f);border-bottom:1px solid 
 [data-kind=dungeons]{width:min(355px,94%)}[data-kind=dungeons] .expCard button{width:100%;margin-top:4px}
 
 [data-kind=mounts]{width:min(350px,94%)}[data-kind=mounts] .expCard button{width:100%;margin-top:5px}
+
+/* 19.4 — combat readability and optional compact toolbar. */
+#tools{align-items:center}#moreTools{color:#e9c98b;border-color:#b09962;min-width:60px}#tools.compactTools>button:not(#moreTools):not([data-panel=bag]):not([data-panel=loot]):not([data-panel=worldmap]):not([data-panel=abilities]):not([data-panel=settings]):not(#save):not(#full){display:none}
+#targetHUD:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) auto minmax(80px,180px);gap:8px;align-items:center;background:#271e18;border-left:2px solid #ab7850;padding:3px 6px;font-size:10px}#targetHUD strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e9c999}#targetHUD small{color:#d3aa85}#targetHUD .meter{height:14px}
+#viewport:after{box-shadow:inset 0 0 55px #15130b35,inset 0 0 9px #1a150d30}
+[data-kind=loot] .lootItem{min-width:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:5px;line-height:1.2;color:#ead8b6}
+[data-kind=loot] .lootItem:hover,[data-kind=loot] .lootItem:focus-visible{border-color:#dfbd79;background:radial-gradient(ellipse at 50% 25%,#665233,#2b241a)}[data-kind=loot] .lootItem small{color:#f0c875;font-weight:bold}
+[data-kind=loot] .lootHint{font-size:10px;color:#baa984;margin:6px 0}#sideGear .equipCell[data-equip]:hover{border-color:#e4c88e}#bars .meter{background:#1d1b16}#bars .meter span{color:#fff1da;text-shadow:0 1px 2px #000}
+@media(max-width:780px){#targetHUD:not([hidden]){grid-template-columns:minmax(0,1fr) 90px}#targetHUD small{display:none}}
