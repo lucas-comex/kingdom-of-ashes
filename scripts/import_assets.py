@@ -67,7 +67,9 @@ for state,steps in states.items():
     for f in steps:
         meta[state].append(row)
         for d in range(8):
-            x,y,w,h,ox,oy=frames[state,f,d]
+            available=[k[1] for k in frames if k[0]==state and k[2]==d]
+            nearest=min(available,key=lambda v:abs(v-f))
+            x,y,w,h,ox,oy=frames[state,nearest,d]
             c=Image.new('RGBA',(218,218));c.alpha_composite(source.crop((x,y,x+w,y+h)),(109-ox,186-oy))
             out.alpha_composite(resize(c,96,96),(d*96,row*96))
         row+=1

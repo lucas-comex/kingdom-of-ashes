@@ -7,9 +7,9 @@ const HUNT = Vector2i(32,38)
 var map: Dictionary
 var grid := AStarGrid2D.new()
 var ordered := Node2D.new()
-var hero: Node2D
-var enemy: Node2D
-var hud: CanvasLayer
+var hero: Actor
+var enemy: Actor
+var hud: HUD
 var cam := Camera2D.new()
 var pos := Vector2(START)
 var enemy_pos := Vector2(HUNT)
@@ -90,7 +90,7 @@ func _ready() -> void:
 	enemy.position = iso(enemy_pos)
 	var npcs: Dictionary = read_json("res://assets/npc_frames.json")
 	for info in [["knight","Guarda de Ashes",Vector2i(24,35)],["wandering_trader","Mercador",Vector2i(23,39)],["peasant_man1","Ferreiro",Vector2i(25,40)],["peasant_woman1","Moradora",Vector2i(20,39)]]:
-		var person: Node2D = Actor.new()
+		var person: Actor = Actor.new()
 		person.kind = "npc"
 		person.npc_name = info[0]
 		person.frames = npcs

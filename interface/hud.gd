@@ -1,5 +1,5 @@
 extends CanvasLayer
-var world: Node2D
+var world
 var life: ProgressBar
 var label: Label
 var details: Label
@@ -26,7 +26,7 @@ func make_label(text: String, size: int=15) -> Label:
 	l.add_theme_color_override("font_color",Color("#e5cea0"))
 	return l
 
-func build(w: Node2D) -> void:
+func build(w) -> void:
 	world=w
 	var root:=Control.new()
 	add_child(root)
