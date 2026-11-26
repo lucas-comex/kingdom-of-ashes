@@ -58,3 +58,15 @@ Escopo mais recente aprovado: 16.1 monstros e chefes; 16.2 arquitetura; 16.3 cen
 - Seis novas criaturas no mundo, atributos e recompensas próprias.
 - Guardião e Rei Sepultado maiores, humanoides com renderizador iluminado; bestiário com progresso, vida, nível e XP após descoberta.
 - Arte ainda experimental, sem alteração no mapa-base ou login; testes pendentes.
+
+## 17.0 — Expansão do Reino (offline)
+- 14 contratos encadeados, objetivos persistentes, recompensas de XP/ouro/itens e bloqueio de resgate duplicado.
+- 12 equipamentos novos e receitas de forja, mercado de compra/venda, aprimoramento até +3 com bônus reais, capacete raro visível.
+- 12 talentos distribuídos pelas 4 vocações, pontos a cada 2 níveis, efeitos de dano, defesa, crítico, alcance, velocidade e mana/cura.
+- Descoberta de 10 cidades, viagem rápida por ouro, banco protegido da perda de ouro na morte.
+- Migração aditiva dos saves, sem contas, multiplayer ou loja cosmética. Novos sistemas e regressões em validação; arte gráfica permanece experimental.
+
+## 17.1 — Atlas original e desempenho
+- Importador de atlas PNG 384×512 (16 quadros base, duas vistas por gênero, espelhamento e recortes de equipamentos), persistência local, prévia e integração com o herói.
+- O arquivo artístico não está no GitHub: pode ser importado pelo menu. Os sprites são experimentais; penteados/tom de pele mantêm seus dados, mas o atlas ainda não oferece todas as variações. Sem oito vistas distintas ou ataques pintados completos.
+- Redução da geração redundante de quadros parados; pré-aquecimento de caminhada; texturas de NPCs na resolução de destino e atualização menos frequente. Sem alegação de ganho medido de FPS.

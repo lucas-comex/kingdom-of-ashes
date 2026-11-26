@@ -10,6 +10,7 @@ const dirs=['south','southwest','west','northwest','north','northeast','east','s
 let angle=0,custom=false;const vocationColors={warrior:['#863e35','#d0aa76'],archer:['#4c6947','#b3ac79'],sorcerer:['#50456f','#b6a1dd'],druid:['#536744','#c4a06a']};
 function shade(hex,f){const n=parseInt(hex.slice(1),16);return '#'+[n>>16&255,n>>8&255,n&255].map(c=>Math.min(255,Math.round(c*f)).toString(16).padStart(2,'0')).join('')}
 function paint(canvas,p,dir='south',frame=0,gear=0,action='stance'){
+ if(window.KOASpritePack?.draw(canvas,p,dir,frame,gear,action))return;
  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.save();ctx.scale(canvas.width/96,canvas.height/96);
  const theta=(dirs.indexOf(dir)<0?0:dirs.indexOf(dir))*Math.PI/4,co=Math.cos(theta),si=Math.sin(theta),female=p.gender==='female';
  const [base,trim]=p.palette||vocationColors[p.vocation]||vocationColors.warrior,skin=p.skin,hair=p.hairColor,steel=gear&32?'#89938d':'#8997a5',leather='#674c38';
@@ -67,11 +68,11 @@ function paint(canvas,p,dir='south',frame=0,gear=0,action='stance'){
  nodes.sort((a,b)=>a.depth-b.depth).forEach(n=>n.draw());if(hit){ctx.globalCompositeOperation='source-atop';ctx.fillStyle='#c43c3a26';ctx.fillRect(20,10,56,73)}
  ctx.restore();
 }
-function textureFor(scene,p,dir,frame,gear,action,prefix){const key=prefix+'-'+[p.gender,p.vocation,p.hair,p.beard,p.skin,p.hairColor,p.beardColor,p.hideHelmet,dir,frame,gear&8191,action||'stance'].join('-');if(scene.textures.exists(key))return key;const cv=document.createElement('canvas');cv.width=cv.height=96;const high=document.createElement('canvas');high.width=high.height=192;paint(high,p,dir,frame,gear,action);const ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(high,0,0,96,96);scene.textures.addCanvas(key,cv);return key}
+function textureFor(scene,p,dir,frame,gear,action,prefix){action=action||'stance';if(action==='stance'||action==='hit')frame=0;const key=prefix+'-'+(!p.npc?window.KOASpritePack?.revision||0:0)+'-'+[p.gender,p.vocation,p.hair,p.beard,p.skin,p.hairColor,p.beardColor,p.hideHelmet,dir,frame,gear&8191,action||'stance'].join('-');if(scene.textures.exists(key))return key;const cv=document.createElement('canvas');cv.width=cv.height=96;if(p.npc||window.koaEco||window.KOASpritePack?.active){paint(cv,p,dir,frame,gear,action)}else{const high=document.createElement('canvas');high.width=high.height=192;paint(high,p,dir,frame,gear,action);const ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(high,0,0,96,96)}scene.textures.addCanvas(key,cv);return key}
 const npcPalettes=[['#624b38','#baa179'],['#40534c','#b9a47e'],['#6b4e48','#c2a681'],['#4e4b66','#c4b39c'],['#736340','#ddc8a5'],['#63594e','#c3b09a']];
 function npcTexture(scene,n,dir,frame,gear=0){const role=n.role||'civilian',label=(n.job||'')+' '+n.name,seed=[...label+' '+(n.anchor?.x??n.home?.x??n.x??0)+' '+(n.anchor?.y??n.home?.y??n.y??0)].reduce((v,ch)=>(v*31+ch.charCodeAt(0))>>>0,0);
  const job=label.toLowerCase(),smith=/ferreir|armeir/.test(job),baker=/padeir/.test(job),priest=/sacerd|curande/.test(job),merchant=/mercador|mercante/.test(job);
- const p={...defaults,gender:/curandeira|sacerdotisa|aldeã|costureira|padeira/.test(job)||(!smith&&!baker&&!merchant&&role==='civilian'&&seed%2===0)?'female':'male',hair:['short','long','tied','shaved'][seed%4],beard:'none',skin:['#bc855e','#d3a184','#855b43','#e1b39a'][seed%4],hairColor:['#3b2d25','#57402b','#ad8756','#aaa39b'][seed%4],palette:smith?['#514538','#a98b66']:baker?['#aa9471','#e5d4ae']:priest?['#57496a','#c7b9d6']:npcPalettes[seed%npcPalettes.length],npcMantle:priest||role==='elder'||role==='king',apron:smith?'#513a27':baker?'#d3c5a7':merchant?'#74543a':null};
+ const p={...defaults,npc:true,gender:/curandeira|sacerdotisa|aldeã|costureira|padeira/.test(job)||(!smith&&!baker&&!merchant&&role==='civilian'&&seed%2===0)?'female':'male',hair:['short','long','tied','shaved'][seed%4],beard:'none',skin:['#bc855e','#d3a184','#855b43','#e1b39a'][seed%4],hairColor:['#3b2d25','#57402b','#ad8756','#aaa39b'][seed%4],palette:smith?['#514538','#a98b66']:baker?['#aa9471','#e5d4ae']:priest?['#57496a','#c7b9d6']:npcPalettes[seed%npcPalettes.length],npcMantle:priest||role==='elder'||role==='king',apron:smith?'#513a27':baker?'#d3c5a7':merchant?'#74543a':null};
  if(p.gender==='male')p.beard=role==='elder'?'full':['none','short','full','goatee'][seed%4];p.beardColor=p.hairColor;
  return textureFor(scene,p,dir,frame,gear|128,frame===4?'swing':frame?'run':'stance','koa-npc-'+seed);
 }
@@ -85,5 +86,5 @@ $('appearanceArmor').addEventListener('input',redraw);$('turnPreview').onclick=(
 $('openCreator').onclick=()=>{custom=true;$('creatorPanel').hidden=!$('creatorPanel').hidden;$('openCreator').textContent=$('creatorPanel').hidden?'PERSONALIZAR PERSONAGEM':'RECOLHER PERSONALIZAÇÃO';redraw()};
 $('loginTab').onclick=()=>{$('loginTab').setAttribute('aria-pressed','true');$('registerTab').setAttribute('aria-pressed','false');$('accountNote').textContent='Contas online ainda não estão disponíveis. Nenhuma senha será coletada nesta versão.'};
 $('registerTab').onclick=()=>{$('loginTab').setAttribute('aria-pressed','false');$('registerTab').setAttribute('aria-pressed','true');$('accountNote').textContent='Cadastro online em desenvolvimento. Por enquanto, crie seu personagem e jogue como visitante.';if($('creatorPanel').hidden)$('openCreator').click()};
-window.KOAAppearance={paint,normalize,get:()=>({...profile}),commit,texture,npcTexture,dirs};redraw();
+window.KOAAppearance={paint,normalize,get:()=>({...profile}),commit,texture,npcTexture,dirs};window.addEventListener('koa-spritepack-changed',redraw);redraw();
 })();
