@@ -1,7 +1,7 @@
 /* 19.0 — Exploration, factions and repeatable commissions. Offline save extension. */
 (()=>{'use strict';
 const sites=[
- ['watch','Torre da Vigília',82,28,'ruin',8],['camp','Acampamento dos Desertores',105,49,'camp',9],['stone','Círculo dos Antigos',76,84,'ruin',8],['hunt','Covil do Urso Pardo',91,65,'camp',9],['pass','Passagem de Vargard',139,72,'ruin',12],['marsh','Brejo dos Sussurros',133,105,'ruin',12],['dock','Ancoradouro Abandonado',38,107,'camp',8],['grove','Bosque da Lua',72,118,'ruin',10],['outpost','Posto da Fronteira',148,135,'camp',15],['altar','Altar de Eldoria',98,144,'ruin',15],['lost','Ruínas do Caminho Perdido',15,139,'ruin',10],['north','Acampamento da Coroa',151,155,'camp',16]
+ ['watch','Torre da Vigília',82,28,'ruin',8],['camp','Acampamento dos Desertores',105,49,'camp',9],['stone','Círculo dos Antigos',76,84,'ruin',8],['hunt','Covil do Urso Pardo',91,65,'camp',9],['pass','Passagem de Vargard',139,72,'ruin',12],['marsh','Brejo dos Sussurros',133,105,'ruin',12],['dock','Ancoradouro Abandonado',38,107,'camp',8],['grove','Bosque da Lua',72,118,'ruin',10],['outpost','Posto da Fronteira',148,135,'camp',15],['altar','Altar de Eldoria',98,144,'ruin',15],['lost','Ruínas do Caminho Perdido',15,139,'ruin',10],['north','Acampamento da Coroa',151,155,'camp',16],['east-ruins','Ruínas de Pedra Negra',176,42,'ruin',18],['east-camp','Passo dos Exilados',172,94,'camp',20],['south-ruins','Santuário das Cinzas',52,172,'ruin',22],['south-camp','Posto do Crepúsculo',174,172,'camp',24]
 ].map(([id,name,x,y,kind,level])=>({id,name,x,y,kind,level}));
 const factions=[
  {id:'guard',name:'Guarda de Ashes',desc:'Proteja as estradas contra saqueadores.',event:'kill:bandido',goal:6,gold:90,xp:180},
