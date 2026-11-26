@@ -24,6 +24,19 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
    await page.route('https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js',route=>route.fulfill({path:require.resolve('phaser/dist/phaser.min.js'),contentType:'application/javascript'}));
    await page.goto('http://127.0.0.1:'+server.address().port+(mode==='preview'||mode==='eco'||mode==='level100'||mode==='level1000'?'/preview/index.html?test=1'+(mode==='eco'?'&eco=1':mode==='level100'?'&leveltest=100':mode==='level1000'?'&leveltest=1000':''):'/?'+(mode==='safe'?'safe=1':'test=1')),{waitUntil:'load'});
    await page.waitForFunction(()=>typeof window.koaSave==='function',null,{timeout:60000});
+   if(mode==='preview'){
+     await page.locator('#registerTab').click();
+     assert.equal(await page.locator('#creatorPanel').isVisible(),true);
+     assert.equal(await page.locator('#accountPanel input[type=password]').isDisabled(),true);
+     await page.locator('#appearanceGender').selectOption('female');
+     await page.locator('#appearanceClass').selectOption('archer');
+     await page.locator('#appearanceHair').selectOption('long');
+     await page.locator('#appearanceSkin').fill('#a86c45');
+     await page.locator('#heroName').fill('Ash Test');
+     const preview=await page.locator('#appearancePreview').evaluate(c=>c.toDataURL());
+     await page.locator('#turnPreview').click();
+     assert.notEqual(await page.locator('#appearancePreview').evaluate(c=>c.toDataURL()),preview);
+   }
    await page.locator('#start').click();
    const expectedWorldSize=['preview','eco','level100','level1000'].includes(mode)?160:80;
     await page.waitForFunction(size=>window.koaStats?.worldSize===size,expectedWorldSize,{timeout:20000});
@@ -91,7 +104,10 @@ const mime={'.html':'text/html','.js':'application/javascript','.svg':'image/svg
      assert.deepEqual(sprites.failures,[],'FLARE sprites must render in all supported directions and frames');
      assert.ok(sprites.unique>=440,'distinct animation textures');
      assert.equal(sprites.gearVariants,5,'each equipment layer must change the rendered pixels');
-     assert.ok(sprites.live.startsWith('flare-unit-hero-'),'live hero must use imported art');
+     assert.ok(sprites.live.startsWith('koa-original-'),'live hero must use original customizable art');
+     assert.equal(await page.evaluate(()=>window.KOAAppearance.get().gender),'female');
+     assert.equal(await page.evaluate(()=>window.KOAAppearance.get().vocation),'archer');
+     assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('koa-preview-appearance-v1')).skin),'#a86c45');
      console.log('FLARE character and equipment PASS',sprites);
      await page.locator('#quickEditMode').click();
      await page.locator('#quickSlots [data-index="1"]').click();

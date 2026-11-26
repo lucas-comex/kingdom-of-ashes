@@ -1,5 +1,14 @@
 # Kingdom of Ashes — Registro de desenvolvimento
 
+## 16.0.3 — Portal do reino e criador de personagens (experimental)
+- Nova tela inicial responsiva, com ilustração original SVG do reino, título em serifas medievais e opções de acesso.
+- Login/cadastro online são interfaces desativadas; nenhum dado de senha é coletado. O servidor de autenticação ainda não existe.
+- Criação local: masculino/feminino, quatro vocações visuais, quatro penteados, quatro estilos de barba, cores livres de pele/cabelo/barba, prévia rotativa e opção de ocultar elmo.
+- Arte original procedural em camadas, integrada ao protagonista em oito direções e animações básicas. A aparência é salva separadamente, não altera o save existente.
+- A armadura equipada aparece no modelo; o controle de skin prepara a configuração para cosméticos futuros, sem loja nem itens pagos. Não existem skins compráveis nesta versão.
+- As quatro vocações ainda compartilham mecânicas existentes. Arte final pintada, NPCs únicos, equipamentos individuais completos e autenticação real são pendentes.
+- Testes de navegador adicionados; resultado pendente.
+
 ## 16.0.2 — Controle e nitidez do herói
 - Reduz o crescimento da velocidade por nível de 4% para 0,5%, com teto de +40% (3,5 unidades/s); nível 12: 2,6375 unidades/s, nível 500: 3,5.
 - Testes de velocidade nos níveis 1, 12, 100, 500 e 1000 e parada após soltar a tecla.
