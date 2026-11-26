@@ -52,7 +52,7 @@ function draw(canvas,p,dir,frame,gear,action){if(!image)return false;const ctx=c
  const strike=['swing','shoot','cast'].includes(action),phase=walking?[0,1,-1,1][col]||0:0,pose=Math.max(0,Math.min(3,frame|0)),swing=strike?[-.09,.13,.21,.03][pose]:action==='block'?-.07:0;
  // Keep the soles fixed while the torso leans; approximate side view from the two original views.
  const side=idx===2||idx===6;ctx.translate(48,82);ctx.scale(side?.84:1,1);ctx.transform(1,0,swing,1,0,0);ctx.translate(-48,-82);
- const ids=p.gearStyle||{},female=p.gender==='female',anchor=anchors(row,col),hand=back?anchor.right:anchor.left,offhand=back?anchor.left:anchor.right;
+ const cosmetic=p.npc?null:p.cosmetic,ids={...(p.gearStyle||{})},female=p.gender==='female',anchor=anchors(row,col),hand=back?anchor.right:anchor.left,offhand=back?anchor.left:anchor.right;
 
  // Body is an original generated raster frame. Gear uses separate cropped raster art.
  let base=starter||image;
@@ -61,10 +61,10 @@ function draw(canvas,p,dir,frame,gear,action){if(!image)return false;const ctx=c
  const body=()=>ctx.drawImage(base,col*96,row*96,96,96,0,0,96,96);
  // Clothing uses a separate alpha-masked pass. It cannot appear outside the painted body silhouette.
  const cloth=document.createElement('canvas');cloth.width=cloth.height=96;const cc=cloth.getContext('2d');cc.imageSmoothingQuality='high';
- const garment=(i,x,y,w,h,slot)=>cc.drawImage(piece(i,ids[slot]),x,y,w,h);
- if(gear&512)garment(7,anchor.waist[0]-(female?8:10),anchor.waist[1]-4,female?16:20,26,'legs');
- if(gear&128){const art=piece(8,ids.boots),half=Math.floor(art.width/2);anchor.feet.forEach(([x,y],j)=>{const sx=j?half:0,sw=j?art.width-half:half;cc.drawImage(art,sx,0,sw,art.height,x-4,y-12,9,14)})}
- if(gear&33)garment(6,anchor.chest[0]-(female?10:13),anchor.chest[1]-12,female?20:26,26,'armor');
+ const garment=(i,x,y,w,h,slot)=>{const art=piece(i,ids[slot]);cc.drawImage(art,x,y,w,h);if(cosmetic){cc.save();cc.globalCompositeOperation='source-atop';cc.globalAlpha=.64;cc.fillStyle=cosmetic.coat;cc.fillRect(x,y,w,h);cc.globalAlpha=.75;cc.fillStyle=cosmetic.trim;cc.fillRect(x,y+h*.17,w,1.4);cc.restore()}};
+ if(cosmetic||gear&512)garment(7,anchor.waist[0]-(female?8:10),anchor.waist[1]-4,female?16:20,26,'legs');
+ if(cosmetic||gear&128){const art=piece(8,ids.boots),half=Math.floor(art.width/2);anchor.feet.forEach(([x,y],j)=>{const sx=j?half:0,sw=j?art.width-half:half;cc.drawImage(art,sx,0,sw,art.height,x-4,y-12,9,14)})}
+ if(cosmetic||gear&33)garment(6,anchor.chest[0]-(female?10:13),anchor.chest[1]-12,female?20:26,26,'armor');
  cc.globalCompositeOperation='destination-in';cc.drawImage(base,col*96,row*96,96,96,0,0,96,96);cc.globalCompositeOperation='source-over';
  const weapon=()=>{if(!(gear&8))return;const i=gear&1024?1:gear&2048?2:gear&4096?3:0,art=piece(i,ids.sword),[gx,gy]=grip(i),height=[36,31,43,31][i],width=height*art.width/art.height;ctx.save();ctx.translate(...hand);
  // Rotate around the grip, never the center of the icon. Same pivot in idle, walk and attack.

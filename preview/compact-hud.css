@@ -95,3 +95,5 @@ body>header{background:linear-gradient(#24211b,#12120f);border-bottom:1px solid 
 [data-kind=loot] .lootItem:hover,[data-kind=loot] .lootItem:focus-visible{border-color:#dfbd79;background:radial-gradient(ellipse at 50% 25%,#665233,#2b241a)}[data-kind=loot] .lootItem small{color:#f0c875;font-weight:bold}
 [data-kind=loot] .lootHint{font-size:10px;color:#baa984;margin:6px 0}#sideGear .equipCell[data-equip]:hover{border-color:#e4c88e}#bars .meter{background:#1d1b16}#bars .meter span{color:#fff1da;text-shadow:0 1px 2px #000}
 @media(max-width:780px){#targetHUD:not([hidden]){grid-template-columns:minmax(0,1fr) 90px}#targetHUD small{display:none}}
+
+[data-kind=skins],[data-kind=backup]{width:min(355px,94%)}.cosmeticCard{display:grid;grid-template-columns:25px 1fr;gap:8px}.cosmeticCard>i{height:28px;border:2px solid;border-radius:3px}.cosmeticCard button{width:100%}
