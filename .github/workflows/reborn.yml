@@ -52,6 +52,7 @@ jobs:
           cp /tmp/koa-templates/templates/web* "$HOME/.local/share/godot/export_templates/4.4.1.stable/"
           Godot_v4.4.1-stable_linux.x86_64 --headless --path . --export-release Web "$PWD/artifacts/web/index.html" 2>&1 | tee /tmp/export.log
           test -s artifacts/web/index.html && test -s artifacts/web/index.wasm && test -s artifacts/web/index.pck
+          python scripts/optimize_web.py artifacts/web
       - name: Package Godot project
         run: |
           mkdir -p artifacts

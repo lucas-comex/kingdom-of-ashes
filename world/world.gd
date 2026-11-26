@@ -22,6 +22,10 @@ var background: Sprite2D
 var static_objects: Array[Sprite2D] = []
 var hud_clock: float = 0.0
 var cull_clock: float = 0.0
+var cull_center := Vector2(INF,INF)
+var cull_zoom: float = -1.0
+var reachable: Dictionary = {}
+var fps_clock: float = 0.0
 var has_gear: bool = false
 const SPECIES = {
 	"goblin":{"name":"Goblin saqueador","hp":60,"damage":8,"gold":25,"xp":50,"respawn":35.0,"speed":1.65,"scale":1.0,"loot":"Moeda antiga"},
@@ -114,9 +118,7 @@ func _ready() -> void:
 	add_child(background)
 	hero = Actor.new()
 	hero.frames = read_json("res://assets/hero_frames.json")
-	for key in hero.frames:
-		if str(key).begins_with("male-") or str(key).begins_with("female-"):
-			hero.textures[key] = image("res://assets/classic/"+str(key)+".webp")
+	load_hero_layers()
 	ordered.add_child(hero)
 	hero.position = iso(pos)
 	hero.scale = Vector2(.82,.82)
@@ -138,6 +140,33 @@ func _ready() -> void:
 		call_deferred("smoke")
 	elif "--capture" in OS.get_cmdline_user_args():
 		call_deferred("capture")
+
+func load_hero_layers() -> void:
+	var layers: Array[String]=["feet","pants","shirt","head","hands"]
+	for id in equipped_gear:
+		var names: Dictionary={"sword":"blade","shield":"shield","armor":"armor","helmet":"helmet","boots":"boots","legs":"legs"}
+		if names.has(id):
+			layers.append(str(names[id]))
+	for name in layers:
+		var key: String=hero.gender+"-"+name
+		if not hero.textures.has(key):
+			hero.textures[key]=image("res://assets/classic/"+key+".webp")
+
+func rebuild_reachable(start: Vector2i) -> void:
+	reachable.clear()
+	if not valid(start):
+		return
+	var queue: Array[Vector2i]=[start]
+	reachable[start]=true
+	var index: int=0
+	while index<queue.size():
+		var at: Vector2i=queue[index]
+		index+=1
+		for d in [Vector2i.LEFT,Vector2i.RIGHT,Vector2i.UP,Vector2i.DOWN]:
+			var next: Vector2i=at+d
+			if valid(next) and not reachable.has(next):
+				reachable[next]=true
+				queue.append(next)
 
 func merchant_cell() -> Vector2:
 	return CAPITAL_MERCHANT if area=="capital" else Vector2(23,39)
@@ -187,6 +216,8 @@ func load_area(next_area: String) -> void:
 
 	if area=="outpost":
 		build_urban_extension()
+	rebuild_reachable(CAPITAL_START if area=="capital" else START)
+	if area=="outpost":
 		spawn_creatures()
 	var npcs: Dictionary = read_json("res://assets/npc_frames.json")
 	var list: Array = [["knight","Guarda Real",Vector2i(22,32)],["wandering_trader","Mercador",Vector2i(26,32)],["peasant_man1","Ferreiro",Vector2i(27,32)],["peasant_woman1","Moradora",Vector2i(28,32)],["knight","Sentinela do portão",Vector2i(8,32)],["peasant_man1","Bram, carpinteiro",Vector2i(20,32)],["peasant_woman1","Elara, herbalista",Vector2i(29,22)],["knight","Capitão Roderic",Vector2i(30,44)],["peasant_man1","Oren, padeiro",Vector2i(34,42)],["wandering_trader","Merek, viajante",Vector2i(37,24)],["peasant_woman1","Irmã Helena",Vector2i(44,30)]] if area=="capital" else [["knight","Guarda de Ashes",Vector2i(24,35)],["wandering_trader","Mercador",Vector2i(23,39)],["peasant_man1","Ferreiro",Vector2i(25,40)],["peasant_woman1","Moradora",Vector2i(20,39)],["knight","Sentinela do portão",Vector2i(24,40)],["peasant_man1","Bram, carpinteiro",Vector2i(26,41)],["peasant_woman1","Elara, herbalista",Vector2i(27,43)],["knight","Capitão Roderic",Vector2i(30,42)],["peasant_man1","Oren, padeiro",Vector2i(35,43)],["wandering_trader","Merek, viajante",Vector2i(41,43)],["peasant_woman1","Irmã Helena",Vector2i(45,44)],["peasant_man1","Tomas, lenhador",Vector2i(18,45)],["knight","Vigia do leste",Vector2i(46,48)]]
@@ -211,6 +242,7 @@ func load_area(next_area: String) -> void:
 	hero.position=iso(pos)
 	target=false
 	route.clear()
+	destination=Vector2i(-1,-1)
 	mouse_walk=false
 	aim=-1
 	effect_time=0.0
@@ -224,6 +256,7 @@ func load_area(next_area: String) -> void:
 	cam.position=hero.position+Vector2(0,-28)
 	if cam.is_inside_tree():
 		cam.reset_smoothing()
+	cull_center=Vector2(INF,INF)
 	cull_objects()
 	message="Clique esquerdo para andar. Botão direito no portão oeste para viajar." if area=="capital" else "Botão direito no posto de viagem para voltar."
 
@@ -269,7 +302,10 @@ func tick_creatures(dt: float) -> void:
 		var at: Vector2 = c["pos"]
 		var home: Vector2 = c["home"]
 		var distance: float = at.distance_to(pos)
-		actor.visible=distance<18.0
+		var show: bool=distance<18.0
+		if actor.visible!=show:
+			actor.visible=show
+		actor.set_name_visible(distance<9.0)
 		if actor.hp<=0:
 			c["respawn"]=float(c["respawn"])-dt
 			actor.animate("die",dt)
@@ -283,7 +319,7 @@ func tick_creatures(dt: float) -> void:
 			continue
 		c["attack"]=maxf(0.0,float(c["attack"])-dt)
 		c["slow"]=maxf(0.0,float(c["slow"])-dt)
-		if distance>18.0 and at.distance_to(home)<.01:
+		if not show and at.distance_to(home)<.01:
 			continue
 		var chasing: bool = distance<6.0 and pos.distance_to(home)<10.0
 		var steps: Array[Vector2i] = c["route"]
@@ -351,11 +387,19 @@ func loot_creature(index: int) -> bool:
 	return true
 
 func cull_objects() -> void:
-	var center: Vector2 = hero.position
-	var extent: Vector2 = get_viewport_rect().size/(2.0*cam.zoom.x)+Vector2(240,320)
+	var center: Vector2=hero.position
+	if center.distance_squared_to(cull_center)<576.0 and is_equal_approx(cull_zoom,cam.zoom.x):
+		return
+	cull_center=center
+	cull_zoom=cam.zoom.x
+	var extent: Vector2=get_viewport_rect().size/(2.0*cam.zoom.x)+Vector2(145,155)
+	var screen_rect:=Rect2(center-extent,extent*2.0)
 	for spr in static_objects:
-		var delta: Vector2 = (spr.position-center).abs()
-		spr.visible=delta.x<=extent.x and delta.y<=extent.y
+		var rect: Rect2=spr.get_rect()
+		var bounds:=Rect2(spr.position+rect.position*spr.scale,rect.size*spr.scale)
+		var show: bool=screen_rect.intersects(bounds)
+		if spr.visible!=show:
+			spr.visible=show
 
 func build_urban_extension() -> void:
 	var atlas := image("res://assets/kingdom-art-v1.webp")
@@ -428,13 +472,13 @@ func path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 func walk_to(p: Vector2i) -> void:
 	var origin: Vector2i = cell(step_to) if step_elapsed<step_duration else cell(pos)
 	var requested: Vector2i = p.clamp(Vector2i.ZERO,Vector2i(63,63))
-	if requested==destination and not route.is_empty():
+	if requested==destination:
 		return
 	destination=requested
 	route.clear()
 	if requested==origin:
 		return
-	if valid(requested):
+	if reachable.has(requested):
 		route=path(origin,requested)
 		if not route.is_empty():
 			return
@@ -445,7 +489,7 @@ func walk_to(p: Vector2i) -> void:
 				if maxi(absi(dx),absi(dy))!=radius:
 					continue
 				var candidate := requested+Vector2i(dx,dy)
-				if not valid(candidate):
+				if not reachable.has(candidate):
 					continue
 				if candidate==origin:
 					return
@@ -482,14 +526,20 @@ func move_route(dt: float) -> bool:
 
 func stop_route() -> void:
 	mouse_walk=false
+	destination=Vector2i(-1,-1)
 	route.clear()
+	queue_redraw()
 
 func tick_residents(dt: float) -> void:
 	for resident in residents:
 		var actor: Actor = resident["actor"]
 		var at: Vector2 = resident["cell"]
-		actor.visible=at.distance_to(pos)<15.0
-		if resident["fixed"] or not actor.visible:
+		var distance: float=at.distance_squared_to(pos)
+		var show: bool=distance<225.0
+		if actor.visible!=show:
+			actor.visible=show
+		actor.set_name_visible(distance<64.0)
+		if resident["fixed"] or not show:
 			continue
 		var steps: Array[Vector2i] = resident["route"]
 		if steps.is_empty():
@@ -809,7 +859,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				else:
 					target=false
 					mouse_walk=true
-					repath_clock=.14
+					repath_clock=.25
+					destination=Vector2i(-1,-1)
 					walk_to(cell(uniso(click)))
 				queue_redraw()
 			MOUSE_BUTTON_RIGHT:
@@ -886,6 +937,7 @@ func refresh_equipment() -> void:
 	has_gear=not owned_gear.is_empty()
 	hero.equipment=not equipped_gear.is_empty()
 	hero.gear=equipped_gear
+	load_hero_layers()
 	hero.queue_redraw()
 
 func buy_item(id: String) -> bool:
@@ -926,6 +978,7 @@ func toggle_equipment() -> void:
 
 func toggle_gender() -> void:
 	hero.gender = "female" if hero.gender == "male" else "male"
+	load_hero_layers()
 	hero.queue_redraw()
 
 func _physics_process(dt: float) -> void:
@@ -944,10 +997,10 @@ func _physics_process(dt: float) -> void:
 		mouse_walk=false
 	repath_clock-=dt
 	if mouse_walk and aim<0 and repath_clock<=0.0:
-		repath_clock=.14
+		repath_clock=.25
 		walk_to(cell(uniso(get_global_mouse_position())))
 	var moving := move_route(dt)
-	if moving or aim>=0 or target:
+	if aim>=0 or target or (moving and route.is_empty()):
 		queue_redraw()
 	tick_residents(dt)
 	if attack_requested:
@@ -979,16 +1032,21 @@ func _physics_process(dt: float) -> void:
 		enemy_pos=Vector2(HUNT)
 		message="Você voltou à capital."
 	cam.position=hero.position+Vector2(0,-28)
+	fps_clock+=dt
+	if fps_clock>=1.0:
+		fps_clock=0.0
+		if OS.has_feature("web"):
+			JavaScriptBridge.eval("window.koaFPS="+str(Engine.get_frames_per_second()))
 	save_clock+=dt
 	if save_clock>=20.0:
 		save_clock=0.0
 		save_progress()
 	hud_clock+=dt
 	cull_clock+=dt
-	if hud_clock>=.10:
+	if hud_clock>=.20:
 		hud_clock=0.0
 		hud.update_view()
-	if cull_clock>=.20:
+	if cull_clock>=.25:
 		cull_clock=0.0
 		cull_objects()
 
@@ -1053,7 +1111,9 @@ func smoke() -> void:
 	assert(not valid(Vector2i(19,43)))
 	assert(valid(Vector2i(24,38)))
 	assert(path(START,HUNT).size()>0)
-	assert(hero.textures.size()==28)
+	assert(hero.textures.size()==5)
+	assert(reachable.has(HUNT))
+	assert(reachable.has(START))
 	assert(creatures.size()>=4)
 	assert(creatures[0]["id"]=="goblin")
 	var goblin: Actor=creatures[0]["actor"]
@@ -1078,7 +1138,7 @@ func smoke() -> void:
 	assert(equip_item("shield") and defense_value()==3 and attack_value()==10)
 	assert(equip_item("shield") and defense_value()==0)
 	toggle_gender()
-	assert(hero.gender=="female")
+	assert(hero.gender=="female" and hero.textures.has("female-shirt"))
 	load_area("capital")
 	walk_to(CAPITAL_GATE)
 	assert(not route.is_empty())

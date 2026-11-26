@@ -52,7 +52,7 @@ func build(w) -> void:
 	root.add_child(top)
 	top.position=Vector2(16,16)
 	top.add_theme_stylebox_override("panel",panel_style())
-	var title:=make_label("KINGDOM OF ASHES  /  REBORN 0.8",18)
+	var title:=make_label("KINGDOM OF ASHES  /  REBORN 0.9",18)
 	top.add_child(title)
 	var side:=PanelContainer.new()
 	root.add_child(side)
@@ -285,17 +285,19 @@ func update_view() -> void:
 		shop_info.text="Poção de cura · 12 ouro | Saldo: %d" % world.gold
 	label.text="VIDA  %d/100    "%world.hero.hp
 	status.text="%s | Nv. %d · Ouro: %d · Abates: %d"%[world.message,world.level,world.gold,world.kills]
-	if is_instance_valid(bag_text):
+	if is_instance_valid(bag_text) and bag.visible:
 		bag_text.text="MOCHILA · %d ouro · %d poções\nXP: %d | Contrato: %d/3\nAtaque: %d · Defesa: %d" % [world.gold,world.potions,world.xp,mini(world.kills,3),world.attack_value(),world.defense_value()]
-	for id in gear_buttons:
-		var button: Button=gear_buttons[id]
-		var owned: bool=world.owned_gear.has(id)
-		var worn: bool=world.equipped_gear.has(id)
-		button.disabled=not owned
-		button.text=("✓ " if worn else "")+str(world.ITEMS[id]["name"]) if owned else "Vazio"
-		button.tooltip_text="%s | Ataque +%d | Defesa +%d" % [world.ITEMS[id]["name"],world.ITEMS[id]["attack"],world.ITEMS[id]["defense"]]
-	for id in shop_buttons:
-		shop_buttons[id].disabled=world.owned_gear.has(id) or world.gold<int(world.ITEMS[id]["price"])
+	if bag.visible:
+		for id in gear_buttons:
+			var button: Button=gear_buttons[id]
+			var owned: bool=world.owned_gear.has(id)
+			var worn: bool=world.equipped_gear.has(id)
+			button.disabled=not owned
+			button.text=("✓ " if worn else "")+str(world.ITEMS[id]["name"]) if owned else "Vazio"
+			button.tooltip_text="%s | Ataque +%d | Defesa +%d" % [world.ITEMS[id]["name"],world.ITEMS[id]["attack"],world.ITEMS[id]["defense"]]
+	if shop.visible:
+		for id in shop_buttons:
+			shop_buttons[id].disabled=world.owned_gear.has(id) or world.gold<int(world.ITEMS[id]["price"])
 	details.text="ATQ %d · DEF %d" % [world.attack_value(),world.defense_value()]
 	fps_label.text="%d FPS" % Engine.get_frames_per_second()
 	dot.position=Vector2(world.pos.x/64.0*mini.size.x,world.pos.y/64.0*mini.size.y)

@@ -14,6 +14,12 @@ var npc_name: String = ""
 var actor_label: String = ""
 var hp: int = 100
 var max_hp: int = 100
+var name_visible: bool = true
+
+func set_name_visible(show: bool) -> void:
+	if name_visible!=show:
+		name_visible=show
+		queue_redraw()
 
 func face(delta: Vector2) -> void:
 	if delta.length_squared() < 0.001:
@@ -91,10 +97,10 @@ func _draw() -> void:
 				break
 		var sz: Vector2 = Vector2(row[4],row[5]) * 0.44
 		draw_texture_rect_region(textures[npc_name], Rect2(-Vector2(row[6],row[7])*0.44,sz),Rect2(row[2],row[3],row[4],row[5]))
-	if hp > 0 and kind != "hero":
+	if hp > 0 and kind != "hero" and name_visible:
 		var font: Font = ThemeDB.fallback_font
 		var w: float = font.get_string_size(actor_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
-		draw_string_outline(font,Vector2(-w/2,-71),actor_label,HORIZONTAL_ALIGNMENT_LEFT,-1,12,4,Color("#161713"))
+		draw_rect(Rect2(-w/2-3,-84,w+6,17),Color(0.05,0.04,0.03,.70))
 		draw_string(font,Vector2(-w/2,-71),actor_label,HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("#e4d4af"))
 		if kind == "monster":
 			draw_rect(Rect2(-20,-66,40,4),Color("#241710"))
