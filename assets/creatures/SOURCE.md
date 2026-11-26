@@ -1,0 +1,1 @@
+FLARE fantasycore skeleton, minotaur and wyvern, CC BY-SA 3.0. Source: https://raw.githubusercontent.com/flareteam/flare-game/c641d2ac2801617f6be3e327454de39250d489b9/mods/fantasycore/ . Repacked and resized, see ../classic/LICENSE.txt and CREDITS.txt.
